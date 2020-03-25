@@ -31,10 +31,6 @@ public class DiscretizedData implements Cloneable{
         return ids_discretized;
     }
 
-//    public char[][] getCds_discretized() {
-//        return cds_discretized;
-//    }
-
     public String[][] getSds_discretized() {
         return sds_discretized;
     }
@@ -82,9 +78,29 @@ public class DiscretizedData implements Cloneable{
     public void setDimensions(int[] dimensions) {
         this.dimensions = dimensions.clone();
     }
+
+    public DiscretizedData() {
+        dimensions = new int[2];
+        dimensions[0] = 0;
+        dimensions[1] = 0;
+        this.ids_discretized = new int[dimensions[0]][0];
+        this.cds_discretized = new char[dimensions[0]][0];
+        this.sds_discretized = new String[dimensions[0]][2];
+        this.fds_discretized = new float[dimensions[0]][0];
+        this.dds_discretized = new double[dimensions[0]][0];
+        this.icds_discretized = new int[dimensions[0]][0];
+    }
     
-    public DiscretizedData(){
-        
+    public DiscretizedData(int attributes){
+        dimensions = new int[2];
+        dimensions[0] = 0;
+        dimensions[1] = attributes;
+        this.ids_discretized = new int[dimensions[0]][attributes];
+        this.cds_discretized = new char[dimensions[0]][attributes];
+        this.sds_discretized = new String[dimensions[0]][2];
+        this.fds_discretized = new float[dimensions[0]][attributes];
+        this.dds_discretized = new double[dimensions[0]][attributes];
+        this.icds_discretized = new int[dimensions[0]][attributes];
     }
     
     public DiscretizedData(int instances, int attributes) {
@@ -97,6 +113,45 @@ public class DiscretizedData implements Cloneable{
         dimensions = new int[2];
         dimensions[0] = instances;
         dimensions[1] = attributes;
+    }
+    
+    public void addEmptyRow(int attributesNumber){
+        dimensions[0]++;
+        dimensions[1] = attributesNumber;
+        double[][] new_dds_discretized = new double[dimensions[0]][dimensions[1]];
+        for (int j=0;j< this.dds_discretized.length; j++)
+            System.arraycopy(this.dds_discretized[j], 0, new_dds_discretized[j], 0, dimensions[1]);
+        for (int i=0; i<this.dimensions[1];i++)
+            new_dds_discretized[dimensions[0]-1][i] = Double.NaN;
+        this.dds_discretized = new_dds_discretized.clone();
+        
+        int[][] new_ids_discretized = new int[dimensions[0]][dimensions[1]];
+        for (int j=0;j< this.ids_discretized.length; j++)
+            System.arraycopy( this.ids_discretized[j], 0, new_ids_discretized[j], 0, dimensions[1]);
+        for (int i=0; i<this.dimensions[1];i++)
+            new_ids_discretized[dimensions[0]-1][i] = Integer.MIN_VALUE;
+        this.ids_discretized = new_ids_discretized.clone();
+        
+        char[][] new_cds_discretized = new char[dimensions[0]][dimensions[1]];
+        for (int j=0;j< this.cds_discretized.length; j++)
+            System.arraycopy( this.cds_discretized[j], 0, new_cds_discretized[j], 0, dimensions[1]);
+        for (int i=0; i<this.dimensions[1];i++)
+            new_cds_discretized[dimensions[0]-1][i] = ' ';
+        this.cds_discretized = new_cds_discretized.clone();
+        
+        float[][] new_fds_discretized = new float[dimensions[0]][dimensions[1]];
+        for (int j=0;j< this.fds_discretized.length; j++)
+            System.arraycopy( this.fds_discretized[j], 0, new_fds_discretized[j], 0, dimensions[1]);
+        for (int i=0; i<this.dimensions[1];i++)
+            new_fds_discretized[dimensions[0]-1][i] = Float.NaN;
+        this.fds_discretized = new_fds_discretized.clone();
+        
+        int[][] new_icds_discretized = new int[dimensions[0]][dimensions[1]];
+        for (int j=0;j< this.icds_discretized.length; j++)
+            System.arraycopy( this.icds_discretized[j], 0, new_icds_discretized[j], 0, dimensions[1]);
+        for (int i=0; i<this.dimensions[1];i++)
+            new_icds_discretized[dimensions[0]-1][i] = Integer.MIN_VALUE;
+        this.icds_discretized = new_icds_discretized.clone();
     }
     
     public void deleteLastAtt(){
@@ -130,6 +185,25 @@ public class DiscretizedData implements Cloneable{
         this.dds_discretized[instance][attribute] = (double) value;
         if(!isClass){
             this.cds_discretized[instance][attribute] = getLetterForNumber(value);
+        } else {
+            this.cds_discretized[instance][attribute] = (char) value;
+        }
+    }
+    
+    public void addValue(int instance, int attribute, double value){
+//        System.out.println(this.dds_discretized.length+", "+this.dds_discretized[0].length);
+        this.ids_discretized[instance][attribute] = (int) value;
+        this.fds_discretized[instance][attribute] = (float) value;
+        this.dds_discretized[instance][attribute] = (double) value;
+        this.cds_discretized[instance][attribute] = (char) value;
+    }
+    
+    public void addValue(int instance, int attribute, double value, boolean isClass){
+        this.ids_discretized[instance][attribute] = (int) value;
+        this.fds_discretized[instance][attribute] = (float) value;
+        this.dds_discretized[instance][attribute] = (double) value;
+        if(!isClass){
+            this.cds_discretized[instance][attribute] = getLetterForNumber((int) value);
         } else {
             this.cds_discretized[instance][attribute] = (char) value;
         }
@@ -229,6 +303,18 @@ public class DiscretizedData implements Cloneable{
         return sb.toString();
     }
     
+    public String PrintFloats2csv() {
+        StringBuilder sb = new StringBuilder();
+        for(int i=0;i<this.dimensions[0];i++){
+            for(int j=0;j<this.dimensions[1];j++){
+                sb.append(this.fds_discretized[i][j]).append(",");
+            }
+            sb.deleteCharAt(this.dimensions[1]-1);
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+    
     public String PrintStrings() {
         StringBuilder sb = new StringBuilder();
         for(int i=0;i<this.dimensions[0];i++){
@@ -317,5 +403,25 @@ public class DiscretizedData implements Cloneable{
             Logger.getLogger(DiscretizedDataSet.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
+    }
+    
+    public void importData(double[][] data){
+        for(int i=0; i<data.length; i++){
+            for(int j=0;j<data[i].length;j++){
+                boolean isclass = false;
+                if(j==0) isclass = true;
+                this.addValue(i, j, (int) Math.round(data[i][j]), isclass);
+            }
+        }
+    }
+    
+    public void destroy(){
+        this.cds_discretized = null;
+        this.ids_discretized = null;
+        this.sds_discretized = null;
+        this.fds_discretized = null;
+        this.dds_discretized = null;
+        this.icds_discretized = null;
+        this.dimensions = null;
     }
 }

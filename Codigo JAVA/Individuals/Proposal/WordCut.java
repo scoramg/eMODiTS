@@ -118,7 +118,7 @@ public class WordCut implements Comparable<WordCut>, Cloneable {
     }
     
     @Override
-    protected WordCut clone(){
+    public WordCut clone(){
         try {
             super.clone();
             WordCut clon = new WordCut();

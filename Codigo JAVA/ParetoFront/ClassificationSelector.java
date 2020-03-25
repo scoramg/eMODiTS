@@ -28,6 +28,11 @@ public class ClassificationSelector implements iSelectors {
     private boolean usingTEST;
     private DataSet ds;
 
+    public ClassificationSelector(boolean usingTEST) {
+        this.individual_type = 0;
+        this.usingTEST = usingTEST;
+    }
+    
     public ClassificationSelector(double[][] front) {
         this.front = front.clone();
         this.individual_type = 0;

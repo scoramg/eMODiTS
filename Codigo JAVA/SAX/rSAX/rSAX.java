@@ -45,8 +45,13 @@ public class rSAX extends SAX {
     }
     
     public rSAX() {
+        super();
     }
 
+    public rSAX(int tau) {
+        this.tau = tau;
+    }
+    
     public rSAX(int wordSize, int alphabetSize, int tau) {
         super(wordSize, alphabetSize);
         this.tau = tau;
@@ -153,7 +158,7 @@ public class rSAX extends SAX {
     }
     
     public static void main(String[] args) throws MyException, SAXException {
-        DataSet ds = new DataSet(10);
+        DataSet ds = new DataSet(10, false);
         rSAX rsax = new rSAX(10, 10, 10); //tau = 10 es lo recomendado por los autores
         TimeSeriesDiscretize.TimeSeriesDiscretize_source.symbols = Utils.Utils.getListSymbols();
         int ksel = rsax.SelectK(ds);

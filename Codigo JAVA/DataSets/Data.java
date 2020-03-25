@@ -32,6 +32,16 @@ public class Data implements Cloneable{
     public double[][] getData() {
         return data;
     }
+    
+    public Double[][] getDataDouble() {
+        Double[][] data = new Double[dimensions[0]][dimensions[1]];
+        for(int i=0; i<dimensions[0];i++){
+            for(int j=0; j<dimensions[1];j++){
+                data[i][j] = Double.valueOf(this.data[i][j]);
+            }
+        }
+        return data;
+    }
 
     public double[][] getNormalized() {
         return normalized;
@@ -114,12 +124,6 @@ public class Data implements Cloneable{
     }
 
     public List<Double> getValuesFrom(int instance, int begin, int end){
-//        List<Double> values = new ArrayList<>();
-//        for(int i=begin;i<=end;i++){
-//            values.add(this.data[instance][i]);
-//        }
-//        return values;
-        
         return Doubles.asList(Arrays.copyOfRange(this.data[instance], begin, end));
 
         
@@ -232,6 +236,20 @@ public class Data implements Cloneable{
         data[instance][attribute] = value;
     }
     
+    public List<Double[]> getInstancesFromKlass(int klass, int klassindex){
+        List<Double[]> instances = new ArrayList<>();
+        for(int i=0; i<this.data.length;i++){
+            if(data[i][klassindex]==klass){
+//                Double[] datos = new Double[data[i].length];
+//                for(int j=0;j<data[i].length;j++){
+//                    datos[j] = Double.valueOf(data[i][j]);
+//                }
+                instances.add(Utils.Utils.doubleArray2DoubleArray(data[i]));
+            }
+        }
+        return instances;
+    }
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -260,6 +278,15 @@ public class Data implements Cloneable{
             Logger.getLogger(Data.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
+    }
+    
+    public void destroy(){
+        data = null;
+        normalized = null;
+        dimensions = null;
+        noClasses = 0;
+        classes = null;  
+        NoInstancesPerClass = null;
     }
     
 }

@@ -441,7 +441,7 @@ public class Population implements IPopulation, Cloneable{
         
         try {
 
-            DataSet ds = new DataSet(iDS);
+            DataSet ds = new DataSet(iDS, false);
             Population pop = new Population(PS, false);
             pop.Generate(iApproach, ds.getTrain(), ds.getLimits(), iFitnessFunctionConf);
             double[] weights = new double[3];

@@ -63,6 +63,11 @@ public class SAXVSM extends AbstractClassifier implements Classifier {
         this.windowSize = -1;
 
         useParamSearch = true;
+        
+        this.ErrorRatesByFolds = new double[10];
+        for (int i=0;i<10;i++){
+            this.ErrorRatesByFolds[i] = Double.NaN;
+        }
     }
     
     /**
@@ -339,7 +344,7 @@ public class SAXVSM extends AbstractClassifier implements Classifier {
     public void Classify(DataSet ds, boolean UsingTest, String set_type) throws Exception{
         Classification csf = new Classification();
         if(UsingTest){
-            csf = new Classification(ds.getOriginal().getData(), ds.getTrain().getData(), ds.getTest().getData());
+            csf = new Classification(ds.getTrain().getData(), ds.getTest().getData());
             csf.ClassifyWithTraining(this);
             this.ErrorRate = csf.getErrorRate();
         } else{
@@ -405,7 +410,7 @@ public class SAXVSM extends AbstractClassifier implements Classifier {
     public static void main(String[] args){
         try {
             //         basicTest();
-            DataSet ds = new DataSet(1);
+            DataSet ds = new DataSet(1, false);
             SAXVSM vsm = new SAXVSM();
             vsm.Classify(ds, false, "original");
             System.out.println("ErrorRate:"+vsm.ErrorRate);

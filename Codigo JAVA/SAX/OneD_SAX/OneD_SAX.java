@@ -252,7 +252,7 @@ public class OneD_SAX extends SAX {
     }
     
     public static void main(String[] args) throws SAXException, MyException {
-        DataSet ds = new DataSet(10);
+        DataSet ds = new DataSet(10, false);
 //        DataSets.Data data = new Data();
 //        int[] dimensions = new int[2];
 //        dimensions[0] = 2;

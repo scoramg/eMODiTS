@@ -25,6 +25,7 @@ import java.awt.Color;
 public class SAXKMeans extends SAX {
 
     public SAXKMeans() {
+        super();
     }
 
     public SAXKMeans(int wordSize, int alphabetSize) {
@@ -72,7 +73,7 @@ public class SAXKMeans extends SAX {
     }
     
     public static void main(String[] args) throws MyException, SAXException {
-        DataSet ds = new DataSet(10);
+        DataSet ds = new DataSet(10, false);
         SAXKMeans saxkmeans = new SAXKMeans(5, 10);
         TimeSeriesDiscretize.TimeSeriesDiscretize_source.symbols = Utils.Utils.getListSymbols();
         DiscretizedData ds_dis = saxkmeans.Discretize(ds.getTrain());

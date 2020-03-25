@@ -68,11 +68,15 @@ public interface IScheme {
     public void sort();
     public double[] getErrorRatesByFolds();
     public List<Prediction> getPredictions();
+    public void getCorrectPredictions(List<Prediction> predictions);
+    public List<Integer> getCorrectPredictions();
     public String Predictions2CSV();
     
     public double getErrorRate();
     public String getDecisionTreeGraph();
+    
     public void Classify(DataSet dataset, boolean UsingTest, String set_type);
+    public void Classify(DiscretizedDataSet dataset, boolean UsingTest, String set_type);
     
     public ReconstructedData Reconstruct(DiscretizedData ds_dis);
     

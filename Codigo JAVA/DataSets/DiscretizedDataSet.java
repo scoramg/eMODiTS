@@ -61,4 +61,11 @@ public class DiscretizedDataSet implements Cloneable{
             return null;
         }
     }
+
+    public void destroy(){
+        this.Original.destroy();
+        this.Train.destroy();
+        this.Test.destroy();
+    }
+    
 }

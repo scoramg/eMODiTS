@@ -29,6 +29,7 @@ import java.util.List;
 public class RKMeans extends SAX {
 
     public RKMeans() {
+        super();
     }
 
     public RKMeans(int wordSize, int alphabetSize) {
@@ -123,7 +124,7 @@ public class RKMeans extends SAX {
     }
     
     public static void main(String[] args) throws MyException, SAXException {
-        DataSet ds = new DataSet(10);
+        DataSet ds = new DataSet(10, false);
         RKMeans rkmeans = new RKMeans(10, 10);
         TimeSeriesDiscretize.TimeSeriesDiscretize_source.symbols = Utils.Utils.getListSymbols();
         DiscretizedData ds_dis = rkmeans.Discretize(ds.getTrain());

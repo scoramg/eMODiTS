@@ -459,7 +459,7 @@ public class MOPopulation implements IPopulation, Cloneable{
     
     public static void ExportInitialPopulation(int PS, int iApproach, int iFitnessFunctionConf, int iDS){
         try {
-            DataSet ds = new DataSet(iDS);
+            DataSet ds = new DataSet(iDS,false);
             MOPopulation Pop = new MOPopulation(PS,  false);
             Pop.Generate(iApproach, ds.getTrain(), ds.getLimits(), iFitnessFunctionConf);
             Pop.Evaluate(ds.getTrain(), new double[3]);
@@ -500,7 +500,7 @@ public class MOPopulation implements IPopulation, Cloneable{
         
         try {
 //            int MaxIter = 50;    
-            DataSet ds = new DataSet(iDS);
+            DataSet ds = new DataSet(iDS, false);
 //            MOPopulation BestClassifications = new MOPopulation(PS, true);
 //            for(int i=0;i<MaxIter;i++){
                 MOPopulation pop = new MOPopulation(PS, true);

@@ -5,6 +5,10 @@
  */
 package FitnessFunctions;
 
+import BeansCL.DiscreteHistogramCollection;
+import BeansCL.HistogramCollection;
+import BeansCL.HistogramScheme;
+import BeansCL.OneDimensionHistogram;
 import DataSets.Data;
 import DataSets.DiscretizedData;
 import DataSets.ReconstructedData;
@@ -13,6 +17,7 @@ import com.jmatio.io.MatFileReader;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLDouble;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -114,6 +119,21 @@ public class FitnessFunction  implements Cloneable {
 //            this.EvaluatedValue += this.weights[f] * EvaluatedValues[f];
 //        }
 //    }
+    
+    public void Evaluate(HistogramCollection ds, HistogramScheme scheme) throws Exception {
+//        DiscreteHistogramCollection dhc = ds.Discretize(scheme);
+        DiscreteHistogramCollection dhc = scheme.Discretize(ds);
+        List<OneDimensionHistogram> dd = dhc.toOneDimensionalDataSet();
+        for(int f=0; f< this.nofunctions;f++){
+            switch(this.idFunctions[f]){
+                case 9:
+                    this.EvaluatedValues[f] = (double) dd.get(0).getData().size()/Functions.KnnAccuracy(dd);
+                    break;
+            }
+            this.EvaluatedValue += this.weights[f] * EvaluatedValues[f];
+        }
+        
+    }
     
     public void Evaluate(Data ds, IScheme scheme) throws Exception {
         DiscretizedData ds_dis = scheme.DiscretizeByPAA(ds);
@@ -229,7 +249,14 @@ public class FitnessFunction  implements Cloneable {
                 this.idFunctions[2] = 8;
                 this.classifier = new J48();
                 this.EvaluatedValues = new double[this.nofunctions];
-                break;        
+                break; 
+            case 9: // 
+                this.nofunctions = 1;
+                this.idFunctions = new int[this.nofunctions];
+                this.idFunctions[0] = 9;
+                this.classifier = new J48();
+                this.EvaluatedValues = new double[this.nofunctions];
+                break; 
         }
     }
 

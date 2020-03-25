@@ -6,6 +6,8 @@
 package Algorithms.operators;
 
 //import Individuals.Proposal.WordCut;
+import BeansCL.HistogramScheme;
+import DataTypes.ArraySortedUniqueList;
 import Interfaces.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,46 @@ import java.util.Random;
  * @author amarquezgr
  */
 public class crossovers {
+    
+    public static HistogramScheme[] OnePoint(HistogramScheme parent1, HistogramScheme parent2){
+        HistogramScheme[] offsprings = new HistogramScheme[2];
+        
+        Random rdn = new Random();
+//        int cut1 = mimath.MiMath.randomInt(1, parent1.getNumberWordCuts());
+//        int cut2 = mimath.MiMath.randomInt(1, parent1.getNumberWordCuts());
+        int cut1 = rdn.nextInt(parent1.getNumberWordCuts());
+        int cut2 = rdn.nextInt(parent2.getNumberWordCuts());
+
+        offsprings[0] = parent1.clone();
+        offsprings[1] = parent2.clone();
+
+        offsprings[0].empty();
+        offsprings[1].empty();
+
+        for (int i=0;i<cut1;i++){
+            offsprings[0].add(parent1.getElementAt(i));
+        }
+
+        for (int i=0;i<cut2;i++){
+            offsprings[1].add(parent2.getElementAt(i));
+        }
+
+        for (int i=cut1;i<parent1.getNumberWordCuts();i++){
+            offsprings[1].add(parent1.getElementAt(i));
+        }
+
+        for (int i=cut2;i<parent2.getNumberWordCuts();i++){
+            offsprings[0].add(parent2.getElementAt(i));
+        }
+        offsprings[0].sort();
+        offsprings[1].sort();
+        
+        if ((offsprings[0].getNumberWordCuts() >= TimeSeriesDiscretize.TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS) && (offsprings[1].getNumberWordCuts() >= TimeSeriesDiscretize.TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS)){
+            return offsprings;
+        } else {
+            return OnePoint(parent1, parent2);
+        }
+    }
     
     public static IScheme[] OnePoint(IScheme parent1, IScheme parent2, int iApproach){
         IScheme[] offsprings = new IScheme[2];
@@ -143,6 +185,26 @@ public class crossovers {
         int max = (parent1.size() > parent2.size()) ? parent1.size()  : parent2.size();
         
         List<Double> offspring = new ArrayList<>();
+        
+        for(int i=0; i<max;i++){
+            Random rdn = new Random();
+            if (rdn.nextDouble() < 0.5){
+                if (i<parent1.size()){
+                    offspring.add(parent1.get(i));
+                }
+            } else {
+                if (i<parent2.size()){
+                    offspring.add(parent2.get(i));
+                }
+            }
+        }
+        return offspring;
+    }
+    
+    public static SortedUniqueList<Integer> DiscreteCrossover(SortedUniqueList<Integer> parent1, SortedUniqueList<Integer> parent2){
+        int max = (parent1.size() > parent2.size()) ? parent1.size()  : parent2.size();
+        
+        SortedUniqueList<Integer> offspring = new ArraySortedUniqueList<>();
         
         for(int i=0; i<max;i++){
             Random rdn = new Random();

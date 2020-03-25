@@ -110,7 +110,7 @@ public class ESAXKMeans extends ESAX {
     }
     
     public static void main(String[] args) throws MyException, SAXException {
-        DataSet ds = new DataSet(10);
+        DataSet ds = new DataSet(10, false);
         ESAXKMeans esaxkmeans = new ESAXKMeans(4, 7);
         TimeSeriesDiscretize.TimeSeriesDiscretize_source.symbols = Utils.Utils.getListSymbols();
         DiscretizedData ds_dis = esaxkmeans.Discretize(ds.getTrain());

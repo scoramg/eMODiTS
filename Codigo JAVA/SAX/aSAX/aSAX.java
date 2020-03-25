@@ -124,7 +124,7 @@ public class aSAX extends SAX {
     
     
     public static void main(String[] args) throws MyException, SAXException {
-        DataSet ds = new DataSet(10);
+        DataSet ds = new DataSet(10, false);
         aSAX asax = new aSAX(10, 8);
 //        MultiDataSet trans = oned_sax.Transform(data);
         TimeSeriesDiscretize_source.symbols = Utils.Utils.getListSymbols();

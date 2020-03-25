@@ -5,12 +5,14 @@
  */
 package FitnessFunctions;
 
+import BeansCL.OneDimensionHistogram;
 import DataMining.Classification.Classification;
 import DataSets.Data;
 import DataSets.DiscretizedData;
 import DataSets.DiscretizedDataSet;
 import DataSets.ReconstructedData;
 import Interfaces.IScheme;
+import SimilarityFunctions.DTWSimilarity;
 import TimeSeriesDiscretize.TimeSeriesDiscretize_source;
 import java.util.Arrays;
 import java.util.List;
@@ -155,22 +157,69 @@ public class Functions {
     }
     
     public static double KnnAccuracy(DataSets.DiscretizedData ds_dis){
-        int[] acerto = new int[ds_dis.getIds_discretized().length];
+        int[] acerto = new int[ds_dis.getDds_discretized().length];
 //        int[] predicted = new int[ds_dis.getIds_discretized().length];
-        for(int f=0;f<ds_dis.getIds_discretized().length;f++){
+        for(int f=0;f<ds_dis.getDds_discretized().length;f++){
             double min_dis = Double.POSITIVE_INFINITY;
             int klass = Integer.MAX_VALUE;
-            int[] serie = Arrays.copyOfRange(ds_dis.getIds_discretized()[f], 1, ds_dis.getDimensions()[1]);
-            for(int j=f+1; j<ds_dis.getIds_discretized().length; j++){
-                int[] compared = Arrays.copyOfRange(ds_dis.getIds_discretized()[j], 1, ds_dis.getDimensions()[1]);
+            double[] serie = Arrays.copyOfRange(ds_dis.getDds_discretized()[f], 1, ds_dis.getDimensions()[1]);
+            for(int j=f+1; j<ds_dis.getDds_discretized().length; j++){
+                double[] compared = Arrays.copyOfRange(ds_dis.getDds_discretized()[j], 1, ds_dis.getDimensions()[1]);
                 double dist = mimath.MiMath.getEuclideanDist(serie, compared);
                 if(dist < min_dis){
                     min_dis = dist;
-                    klass = ds_dis.getIds_discretized()[j][0];
+                    klass = (int) ds_dis.getDds_discretized()[j][0];
 //                    predicted[f] = ds_dis.getIds_discretized()[j][0];
                 }
             }
-            acerto[f] = (klass == ds_dis.getIds_discretized()[f][0]) ? 1 : 0;
+            acerto[f] = (klass == ds_dis.getDds_discretized()[f][0]) ? 1 : 0;
+        }
+//        for(int i = 0; i< acerto.length; i++) System.out.println(ds_dis.getIds_discretized()[i][0]+","+predicted[i]);
+        return mimath.MiMath.getMedia(acerto);
+    }
+    
+    public static double KnnAccuracy(List<OneDimensionHistogram> ds_dis){
+        int[] acerto = new int[ds_dis.size()];
+        for(int f=0;f<ds_dis.size();f++){
+            double min_dis = Double.POSITIVE_INFINITY;
+            int klass = Integer.MAX_VALUE;
+            if (ds_dis.get(f).getData().size() == 0){
+                System.out.println(ds_dis.get(f).getData().size());
+                System.out.println(ds_dis.get(f).getData().toString());
+            }
+            Double[] serie = Arrays.copyOfRange(ds_dis.get(f).getData().toArray(new Double[ds_dis.get(f).getData().size()]), 1, ds_dis.get(f).getData().size());
+            for(int j=f+1; j<ds_dis.size(); j++){
+                Double[] compared = Arrays.copyOfRange(ds_dis.get(j).getData().toArray(new Double[ds_dis.get(j).getData().size()]), 1, ds_dis.get(j).getData().size());
+                double dist = mimath.MiMath.getEuclideanDist(serie, compared);
+                if(dist < min_dis){
+                    min_dis = dist;
+                    klass = (int) ds_dis.get(j).getKlass();
+                }
+            }
+            acerto[f] = (klass == ds_dis.get(f).getKlass()) ? 1 : 0;
+        }
+        return mimath.MiMath.getMedia(acerto);
+    }
+    
+    public static double KnnAccuracyDTW(List<OneDimensionHistogram> ds_dis){
+        int[] acerto = new int[ds_dis.size()];
+        DTWSimilarity dtw = new DTWSimilarity();
+//        int[] predicted = new int[ds_dis.getIds_discretized().length];
+        for(int f=0;f<ds_dis.size();f++){
+            double min_dis = Double.POSITIVE_INFINITY;
+            int klass = Integer.MAX_VALUE;
+            Double[] serie = Arrays.copyOfRange(ds_dis.get(f).getData().toArray(new Double[ds_dis.get(f).getData().size()]), 1, ds_dis.get(f).getData().size());
+            for(int j=f+1; j<ds_dis.size(); j++){
+                Double[] compared = Arrays.copyOfRange(ds_dis.get(j).getData().toArray(new Double[ds_dis.get(j).getData().size()]), 1, ds_dis.get(j).getData().size());
+                double dist = dtw.measure(serie, compared);
+//                double dist = mimath.MiMath.getEuclideanDist(serie, compared);
+                if(dist < min_dis){
+                    min_dis = dist;
+                    klass = (int) ds_dis.get(j).getKlass();
+//                    predicted[f] = ds_dis.getIds_discretized()[j][0];
+                }
+            }
+            acerto[f] = (klass == ds_dis.get(f).getKlass()) ? 1 : 0;
         }
 //        for(int i = 0; i< acerto.length; i++) System.out.println(ds_dis.getIds_discretized()[i][0]+","+predicted[i]);
         return mimath.MiMath.getMedia(acerto);

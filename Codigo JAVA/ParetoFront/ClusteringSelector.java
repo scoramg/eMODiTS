@@ -43,6 +43,11 @@ public class ClusteringSelector implements iSelectors {
 	}
     }
     
+    public ClusteringSelector(int k, int individual_type) {
+        this.k = k;
+        this.individual_type = individual_type;
+    }
+    
     public ClusteringSelector(double[][] front, int k) {
         addPoints(front);
         this.individual_type = 0;

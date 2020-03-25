@@ -259,7 +259,7 @@ public class ESAX extends SAX {
 
     
     public static void main(String[] args) throws MyException, SAXException {
-        DataSet ds = new DataSet(10);
+        DataSet ds = new DataSet(10, false);
         ESAX esax = new ESAX(4, 7);
         TimeSeriesDiscretize_source.symbols = Utils.Utils.getListSymbols();
         DiscretizedData ds_dis = esax.Discretize(ds.getTrain());

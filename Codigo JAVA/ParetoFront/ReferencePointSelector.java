@@ -13,6 +13,10 @@ public class ReferencePointSelector implements iSelectors{
     private ReferencePoint reference_point;
     private double[][] front;
     private int type_point;
+    
+    public ReferencePointSelector(int type_point) {
+        this.type_point = type_point;
+    }
 
     public ReferencePointSelector(double[][] data, int type_point) {
         this.front = data.clone();

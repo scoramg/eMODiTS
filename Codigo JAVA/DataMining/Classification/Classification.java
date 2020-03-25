@@ -31,6 +31,7 @@ import weka.core.converters.ArffSaver;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.AddCluster;
+import weka.filters.unsupervised.attribute.NumericCleaner;
 import weka.filters.unsupervised.attribute.NumericToNominal;
 import weka.filters.unsupervised.attribute.Reorder;
 
@@ -63,19 +64,10 @@ public final class Classification {
         return errorRate;
     }
 
-//    public Classifier getClassifier() {
-//        return classifier;
-//    }
-//
-//    public void setClassifier(Classifier classifier) {
-//        this.classifier = classifier;
-//    }
 
     public List<Prediction> getPredictions() {
         return predictions;
     }
-
-
     
     public void setDataSource(Instances DataSource) {
         this.DataSource = DataSource;
@@ -97,68 +89,52 @@ public final class Classification {
         this.errorRate = Double.NaN;
     }
     
-//    public Classification(DataSet.DiscretizedDataSet source, Classifier classifier) {
     public Classification(DataSets.DiscretizedData source){
         try {
             this.DataSource = ImportFrom("DataSource",source);
             this.errorRate = Double.NaN;
-//            this.classifier = classifier;
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-//    public Classification(double[][] DataSource, Classifier classifier) {
     public Classification(double[][] DataSource) {
         try {
             this.DataSource = ImportFrom("DataSource",DataSource);
             this.errorRate = Double.NaN;
-//            this.classifier = classifier;
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-    public Classification(double[][] Data, double[][] DataTrain, double[][] DataTest) {
+    public Classification(double[][] DataTrain, double[][] DataTest) {
         try {
-            this.DataSource = ImportFrom("DataSource", Data);
-            Instances structure = new DataSource(this.DataSource).getStructure();
-            
-            this.DataTrain = ImportFrom("DataTrain", structure, DataTrain);
-            this.DataTest = ImportFrom("DataTest", structure, DataTest);
+            this.DataTrain = ImportFrom("DataSource", DataTrain);
+            this.DataTest = ImportFrom("DataSource", DataTest);
             this.errorRate = Double.NaN;
-//            this.classifier = classifier;
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-//    public Classification(Instances DataSource, Classifier classifier) {
     public Classification(Instances DataSource) {    
         this.DataSource = DataSource;
         this.errorRate = Double.NaN;
-//        this.classifier = classifier;
     } 
-//    
-//    public Classification(Instances DataTrain, Instances DataTest, Classifier classifier) {
+
     public Classification(Instances DataTrain, Instances DataTest) {
         this.DataTrain = DataTrain;
         this.DataTest = DataTest;
-//        this.classifier = classifier;
         this.errorRate = Double.NaN;
     }
     
-//    public Classification(DataSet.DiscretizedDataSet DataTrain, DataSet.DiscretizedDataSet DataTest, Classifier classifier) throws Exception {
     public Classification(DataSets.DiscretizedData DataTrain, DataSets.DiscretizedData DataTest) throws Exception {    
         TreeSet[] attrValues = AttributeValues(DataTrain, DataTest);
         this.DataTrain = ImportFrom("DataTrain", attrValues, DataTrain);
         this.DataTest = ImportFrom("DataTest", attrValues, DataTest);
-        
-//        this.classifier = classifier;
         this.errorRate = Double.NaN;
     }
     
-//    public Classification(DataSet.DiscretizedDataSet Data, DataSet.DiscretizedDataSet DataTrain, DataSet.DiscretizedDataSet DataTest, Classifier classifier) throws Exception {
     public Classification(DataSets.DiscretizedData Data, DataSets.DiscretizedData DataTrain, DataSets.DiscretizedData DataTest) throws Exception {    
         this.DataSource = ImportFrom("Data", Data);
 
@@ -166,24 +142,19 @@ public final class Classification {
         this.DataTrain = ImportFrom("DataTrain", structure, DataTrain);
         this.DataTest = ImportFrom("DataTest", structure, DataTest);
         
-//        this.classifier = classifier;
         this.errorRate = Double.NaN;
     }
     
-//    public Classification(Instances DataSource, Instances DataTrain, Instances DataTest, Classifier cls) {
     public Classification(Instances DataSource, Instances DataTrain, Instances DataTest) {    
         this.DataSource = DataSource;
         this.DataTrain = DataTrain;
         this.DataTest = DataTest;
-//        this.classifier = cls;
         this.errorRate = Double.NaN;
     }
     
     public double[] ClassifyByCrossValidation(Classifier classifier){
         try {
-//            DataSource.setClassIndex(IndexClassTrain);                
-//            System.out.println("classifier.getClass().getName():"+classifier.getClass().getName());
-            
+            System.out.println(DataSource.numInstances());
             classifier.buildClassifier(DataSource);
             Evaluation evalTrainCV = new Evaluation(DataSource);
             double[] res = evalTrainCV.crossValidateModel2(classifier, DataSource, 10, new Random(1));                
@@ -196,33 +167,36 @@ public final class Classification {
         }
     }
     
-    public void ClassifyByCVTest(Classifier classifier){
-        try {
-            classifier.buildClassifier(DataTest);
-            Evaluation evalTrainCV = new Evaluation(DataTest);
-            evalTrainCV.crossValidateModel(classifier, DataTest, 10, new Random(1));   
-            this.setErrorRate((double) evalTrainCV.pctIncorrect()/100);
-            this.predictions = new ArrayList<>(evalTrainCV.predictions());
-        } catch (Exception ex) {
-            Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
-    public void ClassifyByCVTrain(Classifier classifier){
+    public double[] ClassifyByCVInTest(Classifier classifier, int numFolds){
+        double[] res = new double[numFolds];
+        this.predictions = new ArrayList<>();
         try {
             classifier.buildClassifier(DataTrain);
-            Evaluation evalTrainCV = new Evaluation(DataTrain);
-            evalTrainCV.crossValidateModel(classifier, DataTrain, 10, new Random(1));                
-            this.setErrorRate((double) evalTrainCV.pctIncorrect()/100);
-            this.predictions = new ArrayList<>(evalTrainCV.predictions());
+            Evaluation evalTest = new Evaluation(DataTest);
+            Instances test = new Instances(DataTest);
+//            System.out.println("Test:");
+//            System.out.println(test.toString());
+            test.randomize(new Random(1));
+            test.stratify(numFolds);
+            for(int i=0; i<numFolds;i++){
+                Instances testf = test.testCV(numFolds, i);
+                evalTest.evaluateModel(classifier, testf); 
+                res[i] = (double) evalTest.pctIncorrect()/(double) 100;
+                for(Prediction e: evalTest.predictions()){
+                    this.predictions.add(e);
+                }
+            }
+            
+            this.setErrorRate(mimath.MiMath.getMedia(res));
+
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return res;
     }
     
     public void ClassifyWithTraining(Classifier classifier){
         try {
-//            System.out.println("DataTrain.attribute(0).numValues():"+DataTrain.attribute(0).numValues());
             classifier.buildClassifier(DataTrain);
             Evaluation evalTest = new Evaluation(DataTrain);  
             evalTest.evaluateModel(classifier, DataTest); 
@@ -238,7 +212,6 @@ public final class Classification {
             DataTrain.setClassIndex(IndexClassTrain);                
             classifier.buildClassifier(DataTrain);
             DataTest.setClassIndex(IndexClassTest);
-//            System.out.println("equalHeaders:"+DataTest.equalHeaders(DataTrain));
             Evaluation evalTest = new Evaluation(DataTrain);  
             evalTest.evaluateModel(classifier, DataTest); 
             this.setErrorRate((double) evalTest.pctIncorrect()/100);
@@ -246,33 +219,6 @@ public final class Classification {
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-    
-    public Classifier ClassifyWithoutTraining(int ClassIndex, Classifier classifier){
-        try {
-            DataSource.setClassIndex(ClassIndex);                
-            Debug.Clock clockModel = new Debug.Clock();
-            clockModel.setUseCpuTime(true);
-            clockModel.start();
-            classifier.buildClassifier(DataSource);
-            clockModel.stop();
-
-            Evaluation evalTrainCV = new Evaluation(DataSource);
-            
-            Debug.Clock clock = new Debug.Clock();
-            clock.setUseCpuTime(true);
-
-            clock.start();
-            
-            evalTrainCV.crossValidateModel(classifier, DataSource, 10, new Random(1)); 
-            
-            clock.stop();
-            this.setErrorRate(evalTrainCV.errorRate());
-            this.predictions = new ArrayList<>(evalTrainCV.predictions());
-        } catch (Exception ex) {
-            Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return classifier;
     }
 
     public TreeSet[] AttributeValues(DataSets.DiscretizedData data_train, DataSets.DiscretizedData data_test){
@@ -288,6 +234,24 @@ public final class Classification {
         for(int j=0; j<data_test.getIds_discretized().length;j++){
             for(int i=0; i<data_test.getIds_discretized()[j].length;i++){
                 attr[i].add(data_test.getIds_discretized()[j][i]);
+            }
+        }
+        return attr;
+    }
+    
+    public TreeSet[] AttributeValues(double[][] data_train, double[][] data_test){
+        TreeSet[] attr = new TreeSet[data_train[0].length];
+        for(int i=0; i<data_train[0].length;i++){
+            attr[i] = new TreeSet();
+        }
+        for(int j=0; j<data_train.length;j++){
+            for(int i=0; i<data_train[j].length;i++){
+                attr[i].add(data_train[j][i]);
+            }
+        }
+        for(int j=0; j<data_test.length;j++){
+            for(int i=0; i<data_test[j].length;i++){
+                attr[i].add(data_test[j][i]);
             }
         }
         return attr;
@@ -334,6 +298,34 @@ public final class Classification {
         return res;
     }
     
+    public static Instances ImportFrom(String name, TreeSet[] attrValues, double[][] data){
+        ArrayList<Attribute> attributes = new ArrayList<>(data[0].length);
+        for(int i=0; i<data[0].length;i++){
+            List<Double> values = new ArrayList<>(attrValues[i]);
+            List<String> attval = new ArrayList<>();
+            for(Double ivalue: values){
+                attval.add(ivalue.toString());
+            }
+            attributes.add(new Attribute("x"+i, attval, i));
+            
+        }
+        
+        Instances res = new Instances(name, attributes,0);
+        
+        for(int f=0; f<data.length; f++){
+            
+            double[] values = new double[data[f].length];
+            for(int j=0;j<data[f].length;j++){
+                values[j] = attributes.get(j).indexOfValue(String.valueOf(data[f][j]));
+            }
+            
+            res.add(new DenseInstance(1.0, values));
+        }
+        res = ConvertNumeric2Nominal(res,"first-last");
+        res.setClassIndex(0);
+        return res;
+    }
+    
     public static Instances ImportFrom(String name, DataSets.DiscretizedData data){
         ArrayList<Attribute> attributes = new ArrayList<>(data.getDimensions()[1]);
         attributes.add(new Attribute("x0",0));
@@ -352,7 +344,17 @@ public final class Classification {
             
             res.add(new DenseInstance(1.0, values));
         }
-        res = ConvertNumeric2Nominal(res,"first-last");
+//        System.out.println(res);
+//        try{
+//            res = ConvertNumeric2Nominal(res,"first-last");
+//        } catch (java.lang.IllegalArgumentException ex) {
+            int decimals = 3;
+            res = ApplyNumericCleaner(res, decimals);
+            res = ConvertNumeric2Nominal(res,"first-last");
+//            cleaner = Filter(classname="weka.filters.unsupervised.attribute.NumericCleaner", options=["-R", "first-last", "-decimals", str(decimals)])
+//            cleaner.inputformat(data)
+//            data = cleaner.filter(data)
+//        }
         res.setClassIndex(0);
         
         return res;
@@ -374,6 +376,10 @@ public final class Classification {
             }
             res.add(new DenseInstance(1.0, values));
         }
+        res = ConvertNumeric2Nominal(res,"first");
+        res.setClassIndex(0);
+//        System.out.println(res.attribute(1).isNominal());
+        
         return res;
     }
     
@@ -439,6 +445,24 @@ public final class Classification {
             convert.setInputFormat(data);
             
             newData=Filter.useFilter(data, convert);
+        } catch (Exception ex) {
+            Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return newData;
+    }
+    
+    public static Instances ApplyNumericCleaner(Instances data, int decimal){
+        Instances newData = null;
+        try {
+            Filter cleaner = new NumericCleaner();
+            
+            String[] options = {"-R", "first-last", "-decimals", String.valueOf(decimal)};
+            
+            cleaner.setOptions(options);
+            cleaner.setInputFormat(data);
+            
+            newData = Filter.useFilter(data, cleaner);
+            
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }

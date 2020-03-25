@@ -12,8 +12,7 @@ import Utils.Utils;
 import com.jmatio.io.MatFileReader;
 import com.jmatio.types.MLDouble;
 import java.awt.Color;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.IOException; 
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -26,11 +25,12 @@ import org.apache.commons.math3.distribution.NormalDistribution;
  */
 public class DataSet implements Cloneable {
 //    public static final int NUMBER_OF_DATASETS = 89;
-    public static final int NUMBER_OF_DATASETS = 90;
+    public static final int NUMBER_OF_DATASETS = 91;
 //    public static final List<Integer> DATASETS_IGNORED = new ArrayList<>();
 //    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(23,66);
-    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(86,87,88,89);
-//    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85);
+//    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(86,87,88,89,90);
+//    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90);
+    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89);
     public static double[][] limits;
     private Data original;
     private Data train;
@@ -107,37 +107,58 @@ public class DataSet implements Cloneable {
         this.test = test.clone();
     }
     
-    public DataSet(int iDS) throws MyException {
+//    public DataSet(int iDS) throws MyException {
+//        this.ruta_ucr = Utils.findDirectory(System.getProperty("user.dir"), "Datasets")+"/";
+//        String bd = DataSet.getUCRRepository(iDS);
+//        this.setName(bd);
+//        this.setIndex(iDS);
+//        this.original = new Data();
+//        this.train = new Data();
+//        this.test = new Data();
+//        if(iDS>0){
+//
+//            String file =  this.ruta_ucr + bd +"/"+bd+".mat";  
+//            
+//            try {
+//                MatFileReader matfilereader = new MatFileReader(file);
+//                this.limits = ((MLDouble) matfilereader.getMLArray("limites")).getArray(); 
+//                this.original.load(matfilereader.getMLArray(bd));
+//                this.train.load(matfilereader.getMLArray(bd+"_TRAIN"));
+//                this.test.load(matfilereader.getMLArray(bd+"_TEST"));
+//            } catch (IOException ex) {
+//                Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+//        } else {
+//            this.limits = new double[1][2];
+//        }
+//    }
+    
+    public DataSet(int iDS, boolean isSmoothed) throws MyException {
         this.ruta_ucr = Utils.findDirectory(System.getProperty("user.dir"), "Datasets")+"/";
-//        classes = new ArrayList<>();
-//        getMinMisclassificationRateFound(iDS);
         String bd = DataSet.getUCRRepository(iDS);
         this.setName(bd);
         this.setIndex(iDS);
-//        this.subfix = subfix;
         this.original = new Data();
         this.train = new Data();
         this.test = new Data();
         if(iDS>0){
-
-            String file =  this.ruta_ucr + bd +"/"+bd+".mat";  
+            String subf = "";
+            if(isSmoothed) {
+                subf = "S";
+            }
+            String file =  this.ruta_ucr + bd +"/"+bd+subf+".mat";  
             
             try {
                 MatFileReader matfilereader = new MatFileReader(file);
-                this.limits = ((MLDouble) matfilereader.getMLArray("limites")).getArray(); 
-                this.original.load(matfilereader.getMLArray(bd));
-                this.train.load(matfilereader.getMLArray(bd+"_TRAIN"));
-                this.test.load(matfilereader.getMLArray(bd+"_TEST"));
-//                this.dimensions = matfilereader.getMLArray(bd+subfix).getDimensions();
-//                this.data = ((MLDouble) matfilereader.getMLArray(bd+subfix)).getArray();
-//                this.setClassesInfo();
+                this.limits = ((MLDouble) matfilereader.getMLArray("limites"+subf)).getArray(); 
+                this.original.load(matfilereader.getMLArray(bd+subf));
+                this.train.load(matfilereader.getMLArray(bd+subf+"_TRAIN"));
+                this.test.load(matfilereader.getMLArray(bd+subf+"_TEST"));
             } catch (IOException ex) {
                 Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
-//            throw new MyException ("The index must be greater than zero");
             this.limits = new double[1][2];
-//            this.noClasses = 0;
         }
     }
 
@@ -237,7 +258,7 @@ public class DataSet implements Cloneable {
             case 87: nombre = "BreastCancer"; break;
             case 88: nombre = "BreastCancerBin"; break;
             case 89: nombre = "Precipitacion"; break;
-            
+            case 90: nombre = "BeansCL"; break;
                 
         }
         return nombre;
@@ -360,9 +381,18 @@ public class DataSet implements Cloneable {
         return subset;
     }
     
+    public void destroy(){
+        limits = null;
+        original.destroy();
+        train.destroy();
+        test.destroy();
+        ruta_ucr = null;
+        name = null;
+    }
+    
     public static void main(String[] args) {
         try {
-            DataSet ds = new DataSet(10);
+            DataSet ds = new DataSet(10,false);
             Plotter plotter = new Plotter(false, Marker.MarkerShape.CIRCLE, false, "Normalize", "", "");
             for(int i=0; i<ds.getTrain().getDimensions()[0]; i++){
                 double[] data = Arrays.copyOfRange(ds.getTrain().getNormalized()[i], 1, ds.getTrain().getNormalized()[i].length-1);

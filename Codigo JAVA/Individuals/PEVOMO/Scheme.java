@@ -11,6 +11,7 @@ import DataSets.Data;
 import Interfaces.IScheme;
 import DataSets.DataSet;
 import DataSets.DiscretizedData;
+import DataSets.DiscretizedDataSet;
 import DataSets.ReconstructedData;
 import Exceptions.MyException;
 import FitnessFunctions.FitnessFunction;
@@ -51,6 +52,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     private double[] ErrorRatesByFolds;
     private String DecisionTreeGraph;
     private List<Prediction> predictions;
+    private List<Integer> correctPredictions;
 //    private String DiscretizedString;
 
 //    private DiscretizedDataSet ds_dis;
@@ -100,6 +102,10 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     public Scheme(){
         this.word = new Word();
         this.alphabet = new Alphabet();
+        this.ErrorRatesByFolds = new double[10];
+        for (int i=0;i<10;i++){
+            this.ErrorRatesByFolds[i] = Double.NaN;
+        }
     }
     
     public Scheme(Word word, Alphabet alphabet, boolean isSelfAdaptation, int iFitnessFunctionConf) {
@@ -107,6 +113,10 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         this.alphabet = alphabet;
         this.isSelfAdaptation = isSelfAdaptation;
         this.fitness_function = new FitnessFunction(iFitnessFunctionConf);
+        this.ErrorRatesByFolds = new double[10];
+        for (int i=0;i<10;i++){
+            this.ErrorRatesByFolds[i] = Double.NaN;
+        }
     }
     
     @Override
@@ -513,6 +523,65 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     }
     
     @Override
+    public void Classify(DiscretizedDataSet dataset, boolean UsingTest, String set_type){
+        try {
+            
+            J48 j48 = new J48();
+            
+            Classification csf = new Classification();
+            if(UsingTest){
+                csf = new Classification(dataset.getTrain(), dataset.getTest());
+                switch (set_type){
+                    case "WithoutCV":
+                        csf.ClassifyWithTraining(j48);
+                        break;
+                    case "WithCV":
+                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
+                        this.ErrorRatesByFolds = errors.clone();
+                        break;
+                    default:
+                        csf.ClassifyWithTraining(j48);
+                        break;
+                }
+                this.ErrorRate = csf.getErrorRate();
+//                this.predictions = csf.getPredictions();
+            } else{
+                DiscretizedData data = new DiscretizedData();
+                
+                switch (set_type){
+                    case "original":
+                        DiscretizedData ds_dis = dataset.getOriginal();
+                        data = ds_dis;
+                        break;
+                    case "train":
+                        DiscretizedData ds_dis_train = dataset.getTrain();
+                        data=ds_dis_train;
+                        break;
+                    case "test":
+                        DiscretizedData ds_dis_test = dataset.getTest();
+                        data=ds_dis_test;
+                        break;
+                } 
+                csf = new Classification(data);
+                double[] errors = csf.ClassifyByCrossValidation(j48);
+                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(errors);
+//                this.predictions = csf.getPredictions();
+            }
+            this.predictions = csf.getPredictions();
+            this.getCorrectPredictions(csf.getPredictions());
+            
+            this.DecisionTreeGraph = j48.graph();
+            
+            
+        } catch (MyException ex) {
+            Logger.getLogger(Scheme.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            Logger.getLogger(Scheme.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    @Override
     public void Classify(DataSet dataset, boolean UsingTest, String set_type){
         try {
             
@@ -523,32 +592,62 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                 DiscretizedData ds_dis_train = this.DiscretizeByPAA(dataset.getTrain());
                 DiscretizedData ds_dis_test = this.DiscretizeByPAA(dataset.getTest());
                 csf = new Classification(ds_dis_train, ds_dis_test);
-                csf.ClassifyWithTraining(j48);
+                switch (set_type){
+                    case "WithoutCV":
+                        csf.ClassifyWithTraining(j48);
+                        break;
+                    case "WithCV":
+                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
+                        this.ErrorRatesByFolds = errors.clone();
+                        break;
+                    default:
+                        csf.ClassifyWithTraining(j48);
+                        break;
+                }
                 this.ErrorRate = csf.getErrorRate();
-                this.predictions = csf.getPredictions();
+                ds_dis_train.destroy();
+                ds_dis_test.destroy();
+//                this.predictions = csf.getPredictions();
+//                DiscretizedData ds_dis_train = this.DiscretizeByPAA(dataset.getTrain());
+//                DiscretizedData ds_dis_test = this.DiscretizeByPAA(dataset.getTest());
+//                csf = new Classification(ds_dis_train, ds_dis_test);
+//                csf.ClassifyWithTraining(j48);
+//                this.ErrorRate = csf.getErrorRate();
+//                this.predictions = csf.getPredictions();
+////                csf = new Classification(ds_dis_train, ds_dis_test);
+////                double[] errors = csf.ClassifyByCVInTest(j48, 10);
+////                this.ErrorRatesByFolds = errors.clone();
+////                this.ErrorRate = csf.getErrorRate();
+////                this.predictions = csf.getPredictions();
             } else{
                 DiscretizedData data = new DiscretizedData();
                 
                 switch (set_type){
                     case "original":
                         DiscretizedData ds_dis = this.DiscretizeByPAA(dataset.getOriginal());
-                        data = ds_dis;
+                        data = ds_dis.clone();
+                        ds_dis.destroy();
                         break;
                     case "train":
                         DiscretizedData ds_dis_train = this.DiscretizeByPAA(dataset.getTrain());
-                        data=ds_dis_train;
+                        data=ds_dis_train.clone();
+                        ds_dis_train.destroy();
                         break;
                     case "test":
                         DiscretizedData ds_dis_test = this.DiscretizeByPAA(dataset.getTest());
                         data=ds_dis_test;
+                        ds_dis_test.clone();
                         break;
                 } 
                 csf = new Classification(data);
                 double[] errors = csf.ClassifyByCrossValidation(j48);
                 this.ErrorRatesByFolds = errors.clone();
                 this.ErrorRate = mimath.MiMath.getMedia(errors);
-                this.predictions = csf.getPredictions();
+//                this.predictions = csf.getPredictions();
+                data.destroy();
             }
+            this.predictions = csf.getPredictions();
+            this.getCorrectPredictions(csf.getPredictions());
             
             this.DecisionTreeGraph = j48.graph();
 //            this.DiscretizedString = ds_dis.getOriginal().PrintStrings();
@@ -848,6 +947,20 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         } catch (FileNotFoundException ex) {
             java.util.logging.Logger.getLogger(Scheme.class.getName()).log(Level.SEVERE, null, ex);
         }       
+    }
+
+    @Override
+    public void getCorrectPredictions(List<Prediction> predictions) {
+        this.correctPredictions = new ArrayList<>();
+        for(int i=0; i<predictions.size(); i++){
+            int pred = predictions.get(i).predicted() == predictions.get(i).actual() ? 1 : 0;
+            this.correctPredictions.add(pred);
+        }
+    }
+
+    @Override
+    public List<Integer> getCorrectPredictions() {
+        return this.correctPredictions;
     }
 
 }

@@ -62,6 +62,7 @@ public class SAX {
   private String DecisionTreeGraph;
   private double[] ErrorRatesByFolds;
   private List<Prediction> predictions;
+  private List<Integer> correctPredictions;
   private double[] AlphabetCuts;
 //  private DiscretizedDataSet ds_dis;
   
@@ -73,7 +74,10 @@ public class SAX {
     super();
     ErrorRate = 0.0;
     DecisionTreeGraph="";
-//    AlphabetCuts = SAX.CalculateCuts(0);
+    this.ErrorRatesByFolds = new double[10];
+        for (int i=0;i<10;i++){
+            this.ErrorRatesByFolds[i] = Double.NaN;
+        }
   }
   
   public SAX(int wordSize, int alphabetSize) {
@@ -83,6 +87,10 @@ public class SAX {
         DecisionTreeGraph="";
         wordSegments = new int[wordSize];
         AlphabetCuts = SAX.CalculateCuts(this.alphabetSize);
+        this.ErrorRatesByFolds = new double[10];
+        for (int i=0;i<10;i++){
+            this.ErrorRatesByFolds[i] = Double.NaN;
+        }
     }
 
   /**
@@ -97,7 +105,10 @@ public class SAX {
         DecisionTreeGraph="";
         wordSegments = new int[wordSize];
         AlphabetCuts = SAX.CalculateCuts(this.alphabetSize);
-//        setDiscretization(ds);
+        this.ErrorRatesByFolds = new double[10];
+        for (int i=0;i<10;i++){
+            this.ErrorRatesByFolds[i] = Double.NaN;
+        }
     }
     
     public DiscretizedDataSet getDiscretization(DataSet ds){
@@ -408,9 +419,31 @@ public class SAX {
                 DiscretizedData ds_dis_train = ds_dis.getTrain();
                 DiscretizedData ds_dis_test = ds_dis.getTest();
                 csf = new Classification(ds_dis_train, ds_dis_test);
-                csf.ClassifyWithTraining(j48);
+                switch (set_type){
+                    case "WithoutCV":
+                        csf.ClassifyWithTraining(j48);
+                        break;
+                    case "WithCV":
+                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
+                        this.ErrorRatesByFolds = errors.clone();
+                        break;
+                    default:
+                        csf.ClassifyWithTraining(j48);
+                        break;
+                }
                 this.ErrorRate = csf.getErrorRate();
-                this.predictions = csf.getPredictions();
+//                this.predictions = csf.getPredictions();
+//                DiscretizedData ds_dis_train = ds_dis.getTrain();
+//                DiscretizedData ds_dis_test = ds_dis.getTest();
+//                csf = new Classification(ds_dis_train, ds_dis_test);
+//                csf.ClassifyWithTraining(j48);
+//                this.ErrorRate = csf.getErrorRate();
+//                this.predictions = csf.getPredictions();
+////                csf = new Classification(ds_dis_train, ds_dis_test);
+////                double[] errors = csf.ClassifyByCVInTest(j48, 10);
+////                this.ErrorRatesByFolds = errors.clone();
+////                this.ErrorRate = csf.getErrorRate();
+////                this.predictions = csf.getPredictions();
             } else{
                 DiscretizedData data = new DiscretizedData();
                 
@@ -431,8 +464,10 @@ public class SAX {
                 double[] errors = csf.ClassifyByCrossValidation(j48);
                 this.ErrorRatesByFolds = errors.clone();
                 this.ErrorRate = mimath.MiMath.getMedia(errors);
-                this.predictions = csf.getPredictions();
+//                this.predictions = csf.getPredictions();
             }
+            this.predictions = csf.getPredictions();
+            this.getCorrectPredictions(csf.getPredictions());
             
             this.DecisionTreeGraph = j48.graph();
             
@@ -628,6 +663,20 @@ public class SAX {
         
         return reconstructed;
     }
+    
+    public void getCorrectPredictions(List<Prediction> predictions){
+        this.correctPredictions = new ArrayList<>();
+        for(int i=0; i<predictions.size(); i++){
+            int pred = predictions.get(i).predicted() == predictions.get(i).actual() ? 1 : 0;
+            this.correctPredictions.add(pred);
+        }
+    }
+
+    public List<Integer> getCorrectPredictions() {
+        return correctPredictions;
+    }
+     
+     
     
 //    public static void main(String[] args) throws MyException, SAXException {
 //        DataSet ds = new DataSet(10);
