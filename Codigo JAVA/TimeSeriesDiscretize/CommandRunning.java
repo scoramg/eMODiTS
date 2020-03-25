@@ -100,7 +100,7 @@ public class CommandRunning {
 
             for(int m=d;m<=fultimo;m++){
                 try {
-                    DataSet ds = new DataSet(m);
+                    DataSet ds = new DataSet(m, false);
                     System.out.println("Dataset: "+ds.getName());
 
                     general_params.setAccumulatedFront(new MOPopulation(0, general_params.isIsSelfAdaption()));

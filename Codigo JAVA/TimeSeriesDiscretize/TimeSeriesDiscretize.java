@@ -555,7 +555,7 @@ public class TimeSeriesDiscretize extends javax.swing.JFrame implements Runnable
             for(int m=d;m<=fultimo;m++){
                 try {
 //                    DataSet ds = new DataSet(m, jTFDatasetDirectory.getText(), "_TRAIN");
-                    DataSet ds = new DataSet(m);
+                    DataSet ds = new DataSet(m, false);
                     double[] weights = new double[3];
                     if(!jChBSelfAdaptation.isSelected()){
                         weights[0] = Double.parseDouble(jTFAlpha.getText());

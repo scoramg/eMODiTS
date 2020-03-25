@@ -70,7 +70,7 @@ public class iRaceTunning {
             if (iAlgorithm == 3) population = new MOPopulation(PS, false);
             else population = new Population(PS, false);;
             
-            DataSet ds = new DataSet(iDS);
+            DataSet ds = new DataSet(iDS, false);
             Generals general_params = new Generals(1, 1, PS, 1, NG, opponents, false, weights, MR, 0, CR, iAlgorithm, population,TypeDataSet);
             
             for (int e=0; e<1;e++){
