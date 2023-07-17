@@ -6,6 +6,7 @@
 package Individuals.Proposal;
 
 import DataMining.Classification.Classification;
+import DataMining.Classification.StatisticRatesCollection;
 import DataSets.Data;
 import Interfaces.IScheme;
 import DataSets.DataSet;
@@ -17,11 +18,13 @@ import FitnessFunctions.FitnessFunction;
 import Individuals.PEVOMO.Alphabet;
 import Individuals.PEVOMO.Word;
 import TimeSeriesDiscretize.TimeSeriesDiscretize_source;
+import Utils.Utils;
 import ca.nengo.io.MatlabExporter;
-import com.github.jabbalaci.graphviz.GraphViz;
+//import com.github.jabbalaci.graphviz.GraphViz;
 import com.jmatio.io.MatFileReader;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLDouble;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -39,6 +42,7 @@ import parameters.Generals;
 import parameters.Locals;
 import weka.classifiers.evaluation.Prediction;
 import weka.classifiers.trees.J48;
+import java.util.Arrays;
 
 /**
  *
@@ -52,13 +56,16 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     private boolean isSelfAdaptation;
     
     private double ErrorRate;
-    private double[] ErrorRatesByFolds;
+//    private double[] ErrorRatesByFolds;
     private String DecisionTreeGraph;
     private List<Prediction> predictions;
     private List<Integer> correctPredictions;
+//    public double[][] MatrixConfusion;
+    StatisticRatesCollection statistic_rates;
 //    private String DiscretizedString;
 //    
 //    private DiscretizedDataSet ds_dis;
+    public Classification csf;
 
     
     public List<WordCut> getElements() {
@@ -93,8 +100,8 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     }
 
     @Override
-    public double[] getErrorRatesByFolds() {
-        return ErrorRatesByFolds;
+    public Classification getClassificationModel() {
+        return this.csf;
     }
 
     @Override
@@ -129,10 +136,11 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
 
     public Scheme() {
         elements = new ArrayList<>();
-        this.ErrorRatesByFolds = new double[10];
-        for (int i=0;i<10;i++){
-            this.ErrorRatesByFolds[i] = Double.NaN;
-        }
+//        this.ErrorRatesByFolds = new double[10];
+//        for (int i=0;i<10;i++){
+//            this.ErrorRatesByFolds[i] = Double.NaN;
+//        }
+        csf = new Classification();
     }
 
     
@@ -142,7 +150,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         double coef = (Math.floor(Math.random()*5)+1)/10;
         int numcuts = (int) Math.floor(coef*ds.getDimensions()[1]);
         for(int i=0; i<numcuts;i++){
-            int cut = MiMath.randomInt(2, ds.getDimensions()[1]-1, this.getCuts());
+            int cut = MiMath.randomInt(TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS, ds.getDimensions()[1]-1, this.getCuts());
             WordCut wordcut = new WordCut(cut, limits);
             elements.add(wordcut);
             sort();
@@ -150,6 +158,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
 //        this.general_params = general_params;
 //        this.local_params = local_params;
         this.fitness_function = new FitnessFunction(iFitnessFunctionConf);
+        csf = new Classification();
     }
 
 //    public Scheme(DataSet ds, int minalphabet, int maxalphabet, FitnessFunction fitness_function, boolean isSelfAdaptation) {
@@ -159,7 +168,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
 //        int numcuts = (int) Math.floor(coef*ds.getDimensions()[1]);
 //        this.isSelfAdaptation = isSelfAdaptation;
 //        for(int i=0; i<numcuts;i++){
-//            int cut = MiMath.randomInt(2, ds.getDimensions()[1]-1, this.getCuts());
+//            int cut = MiMath.randomInt(TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS, ds.getDimensions()[1]-1, this.getCuts());
 //            WordCut wordcut = new WordCut(cut, ds.getLimits());
 //            elements.add(wordcut);
 //            sort();
@@ -331,6 +340,22 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         
     }
 
+    public double[] evaluate(Data ds, double[] weights, int[] functions) {
+        try {
+            FitnessFunction ff = new FitnessFunction();
+            ff.setNofunctions(functions.length);
+            ff.initEvaluatedValues();
+            ff.setIdFunctions(functions);
+            ff.setWeights(weights);
+            ff.Evaluate(ds, this);
+            return ff.getEvaluatedValues();
+        } catch (Exception ex) {
+            Logger.getLogger(Scheme.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+        
+    }
+
     @Override
     public FitnessFunction getFitnessFunction() {
         return fitness_function;
@@ -352,7 +377,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         double coef = (Math.floor(Math.random()*5)+1)/10;
         int numcuts = (int) Math.floor(coef*ds.getDimensions()[1]);
         for(int i=0; i<numcuts;i++){
-            int cut = MiMath.randomInt(2, ds.getDimensions()[1]-1, this.getCuts());
+            int cut = MiMath.randomInt(TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS, ds.getDimensions()[1]-1, this.getCuts());
             WordCut wordcut = new WordCut(cut, limits);
             elements.add(wordcut);
             sort();
@@ -368,7 +393,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
             excluir = new TreeSet<>(offspring.getCuts());
             
             if(Math.random() <= MutationRate){
-                int cut = MiMath.randomInt(2, ds.getDimensions()[1]-1, excluir);
+                int cut = MiMath.randomInt(TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS, ds.getDimensions()[1]-1, excluir);
                 if (cut > 0){
                     offspring.getElementAt(i).setCut(cut);
                 }
@@ -421,7 +446,8 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     
     @Override
     public String getName() {
-        return "Proposal";
+        //return "ProposalEP";
+        return "MODiTS";
     }
     
     @Override
@@ -512,6 +538,16 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
             general_params.exporter.add("ConvergenceData", local_params.ConvergenceData);
             
             general_params.exporter.add("MeasuresData", local_params.MeasuresData);
+
+            /* Adicional para el análisis de frentes de pareto para infoloss*/
+            int[] functions = {0, 1, 8};
+            double[] values = this.evaluate(local_params.getDs().getTrain(), general_params.getWeights(), functions);
+            float[][] fitness_values = new float[1][3];
+            for(int i=0;i<values.length; i++){
+                fitness_values[0][i] = (float) values[i];
+            }
+            general_params.exporter.add("fitness_paretos", fitness_values);
+            /* -------- */
             
             general_params.exporter.write(FileTabla);
         } catch (IOException ex) {
@@ -712,7 +748,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
             
             J48 j48 = new J48();
             
-            Classification csf = new Classification();
+            csf = new Classification();
             if(UsingTest){
                 csf = new Classification(dataset.getTrain(), dataset.getTest());
                 switch (set_type){
@@ -720,8 +756,8 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                         csf.ClassifyWithTraining(j48);
                         break;
                     case "WithCV":
-                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
-                        this.ErrorRatesByFolds = errors.clone();
+                        csf.ClassifyByCVInTest(j48, 10);
+//                        this.ErrorRatesByFolds = errors.clone();
                         break;
                     default:
                         csf.ClassifyWithTraining(j48);
@@ -747,14 +783,15 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                         break;
                 } 
                 csf = new Classification(data);
-                double[] errors = csf.ClassifyByCrossValidation(j48);
-                this.ErrorRatesByFolds = errors.clone();
-                this.ErrorRate = mimath.MiMath.getMedia(errors);
+                csf.ClassifyByCrossValidation(j48);
+//                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(csf.eval.getErrorRatesByFolds());
 //                this.predictions = csf.getPredictions();
             }
             this.predictions = csf.getPredictions();
             this.getCorrectPredictions(csf.getPredictions());
-            
+//            this.MatrixConfusion = csf.getMatrixConfusion();
+            statistic_rates = new StatisticRatesCollection(csf);
             this.DecisionTreeGraph = j48.graph();
             
             
@@ -771,7 +808,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
             
             J48 j48 = new J48();
             
-            Classification csf = new Classification();
+            csf = new Classification();
             if(UsingTest){
 //                DiscretizedData ds_dis_train = this.DiscretizeByPAA(dataset.getTrain());
 //                DiscretizedData ds_dis_test= this.DiscretizeByPAA(dataset.getTest());
@@ -787,8 +824,8 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                         csf.ClassifyWithTraining(j48);
                         break;
                     case "WithCV":
-                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
-                        this.ErrorRatesByFolds = errors.clone();
+                        csf.ClassifyByCVInTest(j48, 10);
+//                        this.ErrorRatesByFolds = errors.clone();
                         break;
                     default:
                         csf.ClassifyWithTraining(j48);
@@ -819,15 +856,16 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                         break;
                 } 
                 csf = new Classification(data);
-                double[] errors = csf.ClassifyByCrossValidation(j48);
-                this.ErrorRatesByFolds = errors.clone();
-                this.ErrorRate = mimath.MiMath.getMedia(errors);
+                csf.ClassifyByCrossValidation(j48);
+//                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(csf.eval.getErrorRatesByFolds());
 //                this.predictions = csf.getPredictions();
                 data.destroy();
             }
             this.predictions = csf.getPredictions();
             this.getCorrectPredictions(csf.getPredictions());
-            
+//            this.MatrixConfusion = csf.getMatrixConfusion();
+            statistic_rates = new StatisticRatesCollection(csf);
             this.DecisionTreeGraph = j48.graph();
 //            this.DiscretizedString = ds_dis.getOriginal().PrintStrings();
             
@@ -864,7 +902,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         File FileDir = new File(directory);
         if(!FileDir.exists()) FileDir.mkdirs();
 
-        GraphViz gv = new GraphViz();
+        //GraphViz gv = new GraphViz();
         try(  PrintWriter out = new PrintWriter( directory+"/"+FileName+".txt" )  ){
                out.println( this.DecisionTreeGraph );
         } catch (FileNotFoundException ex) {
@@ -946,7 +984,16 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
             exporter.add("ds_dis", ds_dis.getFds_discretized());
             exporter.add("ds_dis_train", ds_dis_train.getFds_discretized());
             exporter.add("ds_dis_test", ds_dis_test.getFds_discretized());
-        
+            
+            /* Adicional para el análisis de frentes de pareto para infoloss*/
+            int[] functions = {0, 1, 8};
+            double[] values = this.evaluate(dataset.getTrain(), this.fitness_function.getWeights(), functions);
+            float[][] fitness_values = new float[1][3];
+            for(int i=0;i<values.length; i++){
+                fitness_values[0][i] = (float) values[i];
+            }
+            exporter.add("fitness_paretos", fitness_values);
+            /* -------- */
     }
 
     @Override
@@ -1039,17 +1086,18 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         ReconstructedData reconstructed = new ReconstructedData(instances,attributes);
         
         List<Integer> diffs = Cuts2Intervals();
-        List<Integer> maximums = this.getTotalCuts();
+         List<Integer> maximums = this.getTotalCuts();
         
-        System.out.println("ds_dis.dimensions: ["+ds_dis.getDimensions()[0]+","+ds_dis.getDimensions()[1]+"]");
-        System.out.println("diffs:"+diffs.toString());
-        System.out.println("maximums:"+maximums.toString());
+        //System.out.println("ds_dis.dimensions: ["+ds_dis.getDimensions()[0]+","+ds_dis.getDimensions()[1]+"]");
+        //System.out.println("diffs:"+diffs.toString());
+        //System.out.println("maximums:"+maximums.toString());
         
         for(int f=0; f<ds_dis.getIds_discretized().length;f++){
             double[] row = new double[1];
             row[0] = ds_dis.getIds_discretized()[f][0];
             for(int c=1; c<ds_dis.getIds_discretized()[f].length;c++){
-                double value = (double) ds_dis.getIds_discretized()[f][c] / maximums.get(c);
+                // double value = (double) ds_dis.getIds_discretized()[f][c] / maximums.get(c);
+                double value = (double) ds_dis.getIds_discretized()[f][c];
                 double[] normvalues = new double[diffs.get(c-1)]; 
                 java.util.Arrays.fill(normvalues, value);
                 double[] aux = new double[row.length + normvalues.length];
@@ -1058,8 +1106,12 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                 System.arraycopy(normvalues, 0, aux, row.length, normvalues.length);
                 
                 row = aux.clone();
+                // System.out.println(aux.toString());
             }
-            reconstructed.addRow(f, row);
+            //reconstructed.addRow(f, row);
+            double[] norm = Utils.Normalize(Arrays.copyOfRange(row, 1, row.length-1));
+            reconstructed.getData()[f][0] = row[0];
+            System.arraycopy(norm, 0, reconstructed.getData()[f], 1, norm.length);
         }
         
         return reconstructed;
@@ -1084,7 +1136,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         if(!FileDir.exists()) FileDir.mkdirs();
 
         try(  PrintWriter out = new PrintWriter( directory+"/"+FileName+".csv" )  ){
-            for(double d: this.ErrorRatesByFolds){
+            for(double d: this.csf.eval.getErrorRatesByFolds()){
                out.println(d);
             }
         } catch (FileNotFoundException ex) {
@@ -1105,4 +1157,68 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     public List<Integer> getCorrectPredictions() {
         return this.correctPredictions;
     }
+
+    @Override
+    public StatisticRatesCollection getStatisticRateCollection() {
+        return this.statistic_rates;
+    }
+
+    @Override
+    public double[] getStatisticalData(int type) {
+        double[] res = new double[this.csf.getNumFolds()];
+        switch(type){
+            case 1: //ErrorRates
+                res = this.csf.eval.getErrorRatesByFolds().clone();
+                break;
+            case 2:
+                res = this.csf.eval.getFMeasureByfolds().clone();
+                break;
+        }
+        return res;
+    }
+    @Override
+    public double getMeasureData(int type) {
+        double res = Double.NEGATIVE_INFINITY;
+        switch(type){
+            case 1: //ErrorRates
+                res = this.getErrorRate();
+                break;
+            case 2:
+                res = this.getStatisticRateCollection().eval.weightedFMeasure();
+                break;
+        }
+        return res;
+    }
+    public static void main(String[] args) throws MyException, FileNotFoundException, IOException{
+        TimeSeriesDiscretize_source.symbols = Utils.getListSymbols();
+        DataSet ds = new DataSet(93, false); 
+        MatFileReader mfr = new MatFileReader("/Users/scoramg/Dropbox/Doctorado IA/Tesis/Programa JAVA/Tesis/e15p100g300_C/ProposalEP/ColposcopiaHML/ColposcopiaHML_ProposalEP_e1.mat");
+        Map<String, MLArray> mlArrayRetrived = mfr.getContent();
+        Scheme esquema = new Scheme();
+        String filename = "cuts";
+        MLArray w = mlArrayRetrived.get(filename);
+        //MLArray w = mlArrayRetrived.get("IndividualFront3");
+        //MLArray w = mlArrayRetrived.get("cuts");
+        double[][] arr = ((MLDouble) w).getArray();
+        for(double[] fila: arr){
+            WordCut wc = new WordCut();
+            List<Double> alph = new ArrayList<>();
+            wc.setCut((int) fila[0]);
+            for(int i=1;i<fila.length;i++){
+                if(!Double.isNaN(fila[i])){
+                    alph.add(fila[i]);
+                }
+            }
+            Alphabet a = new Alphabet();
+            a.setAlphabet(alph);
+            wc.setAlphabet(a);
+            esquema.elements.add(wc);
+        }
+        int[] functions = {0,1,8};
+        FitnessFunction ff = new FitnessFunction(12);
+        double[] values = esquema.evaluate(ds.getTrain(), new double[3], functions);
+        System.out.println("2");
+    }
 }
+
+

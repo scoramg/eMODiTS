@@ -75,8 +75,16 @@ public class ClassificationSelector implements iSelectors {
         double minErr = Double.POSITIVE_INFINITY;
 
         IScheme indAux;
-        if (this.individual_type == 0) indAux = new Individuals.Proposal.MOScheme();
-        else indAux = new Individuals.PEVOMO.MOScheme();
+        if (this.individual_type == 0){
+            indAux = new Individuals.Proposal.MOScheme();
+        }
+        else {
+            if (this.individual_type == 1){
+                indAux = new Individuals.Proposal.MOScheme();
+            } else {
+                indAux = new Individuals.PEVOMO.MOScheme();
+            }
+        }
 
         Map<String, MLArray> mlArrayRetrived = mfr.getContent();
 

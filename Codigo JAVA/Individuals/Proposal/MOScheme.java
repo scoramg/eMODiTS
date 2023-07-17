@@ -6,6 +6,7 @@
 package Individuals.Proposal;
 
 import DataMining.Classification.Classification;
+import DataMining.Classification.StatisticRatesCollection;
 import DataSets.Data;
 import DataSets.DataSet;
 import DataSets.DiscretizedData;
@@ -21,10 +22,14 @@ import ca.nengo.io.MatlabExporter;
 import com.jmatio.io.MatFileReader;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLDouble;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,10 +60,14 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     private double CrowdingDistance;
     
     private double ErrorRate;
-    private double[] ErrorRatesByFolds;
+    //private double[] ErrorRatesByFolds;
     private String DecisionTreeGraph;
     private List<Prediction> predictions;
     private List<Integer> correctPredictions;
+//    public double[][] MatrixConfusion;
+    public StatisticRatesCollection statistic_rates;
+    
+    public Classification csf;
 
     @Override
     public List<WordCut> getElements() {
@@ -162,10 +171,11 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         CrowdingDistance=0;
         ErrorRate = Double.NaN;
         DecisionTreeGraph = "";
-        this.ErrorRatesByFolds = new double[10];
+        /*this.ErrorRatesByFolds = new double[10];
         for (int i=0;i<10;i++){
             this.ErrorRatesByFolds[i] = Double.NaN;
-        }
+        }*/
+        csf = new Classification();
     }
 
     
@@ -192,7 +202,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         double coef = (Math.floor(Math.random()*5)+1)/10;
         int numcuts = (int) Math.floor(coef*ds.getDimensions()[1]);
         for(int i=0; i<numcuts;i++){
-            int cut = MiMath.randomInt(2, ds.getDimensions()[1]-1, this.getCuts());
+            int cut = MiMath.randomInt(TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS, ds.getDimensions()[1]-1, this.getCuts());
             WordCut wordcut = new WordCut(cut, limits);
             elements.add(wordcut);
             sort();
@@ -200,6 +210,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         ErrorRate = Double.NaN;
         DecisionTreeGraph = "";
         this.fitness_function = new FitnessFunction(iFitnessFunctionConf);
+        csf = new Classification();
     }
     
     @Override
@@ -356,7 +367,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         double coef = (Math.floor(Math.random()*5)+1)/10;
         int numcuts = (int) Math.floor(coef*ds.getDimensions()[1]);
         for(int i=0; i<numcuts;i++){
-            int cut = MiMath.randomInt(2, ds.getDimensions()[1]-1, this.getCuts());
+            int cut = MiMath.randomInt(TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS, ds.getDimensions()[1]-1, this.getCuts());
             WordCut wordcut = new WordCut(cut, limits); 
             elements.add(wordcut);
             sort();
@@ -386,8 +397,8 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
 
     @Override
     public String getName() {
-        return "Proposal Multiobjective";
-//        return "MODiTS";
+//        return "Proposal Multiobjective";
+        return "MODiTS";
     }
     
     @Override
@@ -434,11 +445,11 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
 //        try {
             float[][] DataCuts = Elements2FloatArray();
             exporter.add("cuts", DataCuts);
-//            float[][] DataFunctionValues = new float[1][this.getEvaluatedValues().length];
-//            for(int i=0;i<this.getEvaluatedValues().length;i++){
-//                DataFunctionValues[0][i] = (float) this.fitness_function.getEvaluatedValues()[i];
-//            }
-//            exporter.add("fitness_values", DataFunctionValues);
+           float[][] DataFunctionValues = new float[1][this.getEvaluatedValues().length];
+           for(int i=0;i<this.getEvaluatedValues().length;i++){
+               DataFunctionValues[0][i] = (float) this.fitness_function.getEvaluatedValues()[i];
+           }
+           exporter.add("fitness_values", DataFunctionValues);
             
             float[][] er = new float[1][1];
             er[0][0] = (float) getErrorRate();
@@ -654,7 +665,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
             excluir = new TreeSet<>(offspring.getCuts());
             
             if(Math.random() <= MutationRate){
-                int cut = MiMath.randomInt(2, ds.getDimensions()[1]-1, excluir);
+                int cut = MiMath.randomInt(TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS, ds.getDimensions()[1]-1, excluir);
                 if (cut > 0){
                     offspring.getElementAt(i).setCut(cut);
                 }
@@ -671,10 +682,10 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     @Override
     public int compareTo(IScheme o) {
 //        MOScheme comp = (MOScheme) o;
-        if (this==null)
-            return 1;
-        else if (o == null)
-                return -1;
+        // if (this==null)
+        //     return 1;
+        // else if (o == null)
+        //         return -1;
         
         if (this.getRank()<o.getRank()) {
             return -1;
@@ -711,7 +722,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         this.ErrorRate=Double.NaN;
         this.DecisionTreeGraph = null;
 //        this.DiscretizedString = null;
-        this.ErrorRatesByFolds = null;
+//        this.ErrorRatesByFolds = null;
     }
     
     @Override
@@ -720,7 +731,6 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
             
             J48 j48 = new J48();
             
-            Classification csf = new Classification();
             if(UsingTest){
                 csf = new Classification(dataset.getTrain(), dataset.getTest());
                 switch (set_type){
@@ -728,8 +738,8 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
                         csf.ClassifyWithTraining(j48);
                         break;
                     case "WithCV":
-                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
-                        this.ErrorRatesByFolds = errors.clone();
+                        csf.ClassifyByCVInTest(j48, 10);
+//                        this.ErrorRatesByFolds = errors.clone();
                         break;
                     default:
                         csf.ClassifyWithTraining(j48);
@@ -755,14 +765,17 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
                         break;
                 } 
                 csf = new Classification(data);
-                double[] errors = csf.ClassifyByCrossValidation(j48);
-                this.ErrorRatesByFolds = errors.clone();
-                this.ErrorRate = mimath.MiMath.getMedia(errors);
+//                double[] errors = csf.ClassifyByCrossValidation(j48);
+                csf.ClassifyByCrossValidation(j48);
+//                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(csf.eval.getErrorRatesByFolds());
+//                this.ErrorRate = csf.eval.errorRate();
 //                this.predictions = csf.getPredictions();
             }
             this.predictions = csf.getPredictions();
             this.getCorrectPredictions(csf.getPredictions());
-            
+//            this.MatrixConfusion = csf.getMatrixConfusion();
+            statistic_rates = new StatisticRatesCollection(csf);
             this.DecisionTreeGraph = j48.graph();
             
             
@@ -779,7 +792,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
             
             J48 j48 = new J48();
             
-            Classification csf = new Classification();
+//            Classification csf = new Classification();
             if(UsingTest){
                 DiscretizedData ds_dis_train = this.DiscretizeByPAA(dataset.getTrain());
                 DiscretizedData ds_dis_test = this.DiscretizeByPAA(dataset.getTest());
@@ -789,8 +802,8 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
                         csf.ClassifyWithTraining(j48);
                         break;
                     case "WithCV":
-                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
-                        this.ErrorRatesByFolds = errors.clone();
+                        csf.ClassifyByCVInTest(j48, 10);
+//                        this.ErrorRatesByFolds = errors.clone();
                         break;
                     default:
                         csf.ClassifyWithTraining(j48);
@@ -820,17 +833,17 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
                         break;
                 } 
                 csf = new Classification(data);
-                double[] errors = csf.ClassifyByCrossValidation(j48);
-                this.ErrorRatesByFolds = errors.clone();
-                this.ErrorRate = mimath.MiMath.getMedia(errors);
+                csf.ClassifyByCrossValidation(j48);
+//                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(csf.eval.getErrorRatesByFolds());
 //                this.predictions = csf.getPredictions();
                 data.destroy();
             }
             this.predictions = csf.getPredictions();
             this.getCorrectPredictions(csf.getPredictions());
-            
+//            this.MatrixConfusion = csf.getMatrixConfusion();
+            statistic_rates = new StatisticRatesCollection(csf);
             this.DecisionTreeGraph = j48.graph();
-            
             
         } catch (MyException ex) {
             Logger.getLogger(MOScheme.class.getName()).log(Level.SEVERE, null, ex);
@@ -862,17 +875,33 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     public void ExportGraph(DataSet ds, String folder, String Location, String Selector){
         String directory ="";
         if(Location.isEmpty()){
-            directory = folder+"/"+ds.getName()+"/Trees/";
+            directory = folder+"/"+ds.getName()+"/Trees";
         } else {
-            directory = Location+'/'+folder+"/"+ds.getName()+"/Trees/";
+            directory = Location+'/'+folder+"/"+ds.getName()+"/Trees";
         }
         String FileName = "Arbol_best_"+Selector;
 //        System.out.println(directory+"/"+FileName+".txt");
 
-        File FileDir = new File(directory);
-        if(!FileDir.exists()){
-            FileDir.mkdirs();
+//        File FileDir = new File(directory+"/");
+//        if(!FileDir.exists()){
+////            System.out.println(directory+"/");
+//            System.out.println(FileDir.mkdirs());
+//            System.out.println(FileDir.mkdir());
+//        }
+        
+        Path dir = Paths.get(directory);
+        try {
+            Files.createDirectories(dir);
+        } catch (IOException ex) {
+            System.out.println(ex);
         }
+        
+//        File treefile = new File(directory+"/"+FileName+".txt" );
+//        try { 
+//            treefile.createNewFile();
+//        } catch (IOException ex) {
+//            Logger.getLogger(MOScheme.class.getName()).log(Level.SEVERE, null, ex);
+//        }
 
         try(  PrintWriter out = new PrintWriter( directory+"/"+FileName+".txt" )  ){
                out.println( this.DecisionTreeGraph );
@@ -923,8 +952,8 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     }
     
     @Override
-    public double[] getErrorRatesByFolds() {
-        return ErrorRatesByFolds;
+    public Classification getClassificationModel() {
+        return this.csf;
     }
 
     @Override
@@ -956,7 +985,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         String FileNameTrain = getName()+"_"+ds.getName()+"_TRAIN";
         String FileNameTest = getName()+"_"+ds.getName()+"_TEST";
         
-        String directory = Location+getName()+"/JSONMODiTS";
+        String directory = Location+getName()+"/"+ds.getName()+"/JSONMODiTS";
         
 
         File FileDir = new File(directory);
@@ -985,9 +1014,9 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         }
     }
     
-    public void plot(DataSet dataset){
+    /*public void plot(DataSet dataset){
         
-    }
+    }*/
     
     public List<Integer> Cuts2Intervals(){
         List<Integer> intervals = new ArrayList<>();
@@ -1056,7 +1085,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         if(!FileDir.exists()) FileDir.mkdirs();
 
         try(  PrintWriter out = new PrintWriter( directory+"/"+FileName+".csv" )  ){
-            for(double d: this.ErrorRatesByFolds){
+            for(double d: this.csf.eval.getErrorRatesByFolds()){
                out.println(d);
             }
         } catch (FileNotFoundException ex) {
@@ -1065,37 +1094,70 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     }
     
     public static void main(String[] args) {
-//        double avg = Arrays.stream(new int[]{1,3,2,5,8}).average().getAsDouble();
-//        double avg = mimath.MiMath.getMedia(new int[]{1,3,2,5,8});
-//        System.out.println(avg);
-//        try {
-//            DataSet ds = new DataSet(2);
-//            MOScheme scheme = new MOScheme();
-//            Alphabet a = new Alphabet();
-//            a.addCut(ds.getLimits());
-//            a.addCut(ds.getLimits());
-//            WordCut wc = new WordCut(39, a);
-//            scheme.addCut(wc, ds.getTrain().getDimensions()[1]-1);
-//            a = new Alphabet();
-//            a.addCut(ds.getLimits());
-//            a.addCut(ds.getLimits());
-//            a.addCut(ds.getLimits());
-//            a.addCut(ds.getLimits());
-//            wc = new WordCut(84, a);
-//            scheme.addCut(wc, ds.getTrain().getDimensions()[1]-1);
-//            a = new Alphabet();
-//            a.addCut(ds.getLimits());
-//            a.addCut(ds.getLimits());
-//            a.addCut(ds.getLimits());
-//            wc = new WordCut(91, a);
-//            scheme.addCut(wc, ds.getTrain().getDimensions()[1]-1);
-//            double comp = FitnessFunctions.Functions.aComplexity(scheme.getElements());
-////            System.out.println(scheme.toString());
-//            System.out.println("comp:"+comp);
-//            
-//        } catch (MyException ex) {
-//            Logger.getLogger(MOScheme.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+        try {
+            TimeSeriesDiscretize_source.symbols = Utils.Utils.getListSymbols();
+            DataSet ds = new DataSet(93, false);
+            double[] weights = new double[4];
+            weights[0] = 0.9;
+            weights[1] = 0.09;
+            weights[2] = 0.009;
+            weights[3] = 0.0009;
+
+            MOScheme esquema = new MOScheme();
+            esquema.setFitnessFunction(new FitnessFunction(8));
+            //String ruta = "/Users/scoramg/Dropbox/Doctorado IA/Tesis/Programa JAVA/Tesis/e15p100g300_EI/MODiTS/Wine/";
+            //MatFileReader mfr = new MatFileReader("/Users/scoramg/Dropbox/Doctorado IA/Tesis/Programa JAVA/Tesis/e15p100g300_EC/MODiTS/ColposcopiaH/ColposcopiaH_MODiTS_CTV_B.mat");
+            //MatFileReader mfr = new MatFileReader(ruta+"Wine_MODiTS.mat");
+            MatFileReader mfr = new MatFileReader("/Users/scoramg/Dropbox/Escolaridad/Doctorado en Inteligencia Artificial (IIIA UV)/Tesis/Programa JAVA/Tesis/e15p100g300_C/MODiTS/ColposcopiaHML/ColposcopiaHML_MODiTS_e1.mat");
+            Map<String, MLArray> mlArrayRetrived = mfr.getContent();
+            
+            // String filename = "FrontIndividual3";
+            String filename = "cuts";
+            MLArray w = mlArrayRetrived.get(filename);
+            //MLArray w = mlArrayRetrived.get("IndividualFront3");
+            //MLArray w = mlArrayRetrived.get("cuts");
+            double[][] arr = ((MLDouble) w).getArray();
+            for(double[] fila: arr){
+                WordCut wc = new WordCut();
+                List<Double> alph = new ArrayList<>();
+                wc.setCut((int) fila[0]);
+                for(int i=1;i<fila.length;i++){
+                    if(!Double.isNaN(fila[i])){
+                        alph.add(fila[i]);
+                    }
+                }
+                Alphabet a = new Alphabet();
+                a.setAlphabet(alph);
+                wc.setAlphabet(a);
+                esquema.elements.add(wc);
+            }
+            
+            
+            esquema.evaluate(ds.getOriginal(), weights);
+            DiscretizedData ds_dis = esquema.DiscretizeByPAA(ds.getTrain());
+            //System.out.println("Q");
+            //System.out.println(esquema.Reconstruct(ds_dis).toString());
+            //System.out.println(ds_dis.PrintStrings());
+            System.out.println(esquema.toString());
+//            ReconstructedData ds_recons = esquema.Reconstruct(ds_dis);
+//            double[][] data_recons = ds_recons.getData();
+//            float[][] dataf_recons = new float[data_recons.length][data_recons[0].length];
+//            for(int i=0; i<data_recons.length; i++){
+//                for(int j=0; j<data_recons[0].length; j++){
+//                    dataf_recons[i][j] = (float) data_recons[i][j];
+//                }
+//            }
+            // File file = new File(ruta+filename+".mat");
+            // MatlabExporter exporter = new MatlabExporter();
+            // exporter.add(filename, dataf_recons);
+            // exporter.write(file);
+            // System.out.println(esquema.toString());
+        } catch (IOException ex) {
+            Logger.getLogger(MOScheme.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (MyException e) {
+            e.printStackTrace();
+        }
+        
     }
 
     @Override
@@ -1110,6 +1172,39 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     @Override
     public List<Integer> getCorrectPredictions() {
         return this.correctPredictions;
+    }
+
+    @Override
+    public StatisticRatesCollection getStatisticRateCollection() {
+        return this.statistic_rates;
+    }
+
+    @Override
+    public double[] getStatisticalData(int type) {
+        double[] res = new double[this.csf.getNumFolds()];
+        switch(type){
+            case 1: //ErrorRates
+                res = this.csf.eval.getErrorRatesByFolds().clone();
+                break;
+            case 2:
+                res = this.csf.eval.getFMeasureByfolds().clone();
+                break;
+        }
+        return res;
+    }
+
+    @Override
+    public double getMeasureData(int type) {
+        double res = Double.NEGATIVE_INFINITY;
+        switch(type){
+            case 1: //ErrorRates
+                res = this.getErrorRate();
+                break;
+            case 2:
+                res = this.getStatisticRateCollection().eval.weightedFMeasure();
+                break;
+        }
+        return res;
     }
 
 }

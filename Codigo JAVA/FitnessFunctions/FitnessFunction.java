@@ -40,6 +40,7 @@ public class FitnessFunction  implements Cloneable {
     private Classifier classifier;
 
     public void setNofunctions(int nofunctions) {
+        //this.EvaluatedValues = new double[nofunctions];
         this.nofunctions = nofunctions;
     }
 
@@ -57,6 +58,10 @@ public class FitnessFunction  implements Cloneable {
 
     public int[] getIdFunctions() {
         return idFunctions;
+    }
+
+    public void initEvaluatedValues(){
+        this.EvaluatedValues = new double[this.nofunctions];
     }
 
     public final void setiConfiguration(int iConfiguration) {
@@ -138,6 +143,8 @@ public class FitnessFunction  implements Cloneable {
     public void Evaluate(Data ds, IScheme scheme) throws Exception {
         DiscretizedData ds_dis = scheme.DiscretizeByPAA(ds);
         ConfusionMatrix MC = new ConfusionMatrix(ds, ds_dis);
+        
+        //System.out.println(MC.toString());
         
         for(int f=0; f< this.nofunctions;f++){
             switch(this.idFunctions[f]){
@@ -242,7 +249,7 @@ public class FitnessFunction  implements Cloneable {
                 this.EvaluatedValues = new double[this.nofunctions];
                 break;    
             case 8: // 
-                this.nofunctions = 3;
+                this.nofunctions = 3; //Entropy, complexity and InfoLoss
                 this.idFunctions = new int[this.nofunctions];
                 this.idFunctions[0] = 0;
                 this.idFunctions[1] = 1;
@@ -250,10 +257,38 @@ public class FitnessFunction  implements Cloneable {
                 this.classifier = new J48();
                 this.EvaluatedValues = new double[this.nofunctions];
                 break; 
-            case 9: // 
+            case 9: // EPEntropy
                 this.nofunctions = 1;
                 this.idFunctions = new int[this.nofunctions];
-                this.idFunctions[0] = 9;
+                this.idFunctions[0] = 0;
+                this.classifier = new J48();
+                this.EvaluatedValues = new double[this.nofunctions];
+                break; 
+            case 10: //EPEntropy and InfoLoss
+                this.nofunctions = 2;
+                this.idFunctions = new int[this.nofunctions];
+                idFunctions[0] = 0;
+                idFunctions[1] = 8;
+                this.EvaluatedValues = new double[this.nofunctions];
+                break;
+            case 11: //EPComplexity and InfoLoss
+                this.nofunctions = 2;
+                this.idFunctions = new int[this.nofunctions];
+                idFunctions[0] = 1;
+                idFunctions[1] = 8;
+                this.EvaluatedValues = new double[this.nofunctions];
+                break;
+            case 12: // EPComplexity
+                this.nofunctions = 1;
+                this.idFunctions = new int[this.nofunctions];
+                this.idFunctions[0] = 1;
+                this.classifier = new J48();
+                this.EvaluatedValues = new double[this.nofunctions];
+                break; 
+            case 13: // InfoLoss
+                this.nofunctions = 1;
+                this.idFunctions = new int[this.nofunctions];
+                this.idFunctions[0] = 8;
                 this.classifier = new J48();
                 this.EvaluatedValues = new double[this.nofunctions];
                 break; 

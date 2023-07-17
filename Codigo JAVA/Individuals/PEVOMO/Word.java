@@ -169,7 +169,7 @@ public class Word implements Cloneable{
             
             if(Math.random() <= MutationRate){
 //                int cut = MiMath.randomInt(2, length-1, excluir);
-                int cut = MiMath.randomInt(2, length-1, excluir.toList());
+                int cut = MiMath.randomInt(TimeSeriesDiscretize_source.MIN_NUMBER_OF_WORD_CUTS, length-1, excluir.toList());
                 if (cut > 0){
                     mutation.replaceAt(i, cut);
                 }

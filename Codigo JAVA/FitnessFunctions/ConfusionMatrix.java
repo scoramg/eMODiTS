@@ -239,6 +239,9 @@ public class ConfusionMatrix implements Cloneable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 //        int j = 0;
+        for (Integer i: this.dimensions){
+            System.out.println(i);
+        }
         for(String pal: this.confusionmatrix.keySet()){
             sb.append(pal).append(" ");
             Integer[] countclass = this.confusionmatrix.get(pal);
@@ -252,10 +255,6 @@ public class ConfusionMatrix implements Cloneable {
         
         for(Integer i: this.NoInstancesPerClass.keySet()){
            sb.append("Klass:").append(i).append(" = ").append(this.NoInstancesPerClass.get(i)).append("\n"); 
-        }
-        
-        for(Integer i: this.SubKlass.keySet()){
-           sb.append("Klass:").append(i).append(" = ").append(this.SubKlass.get(i)).append("\n"); 
         }
         
         return sb.toString();

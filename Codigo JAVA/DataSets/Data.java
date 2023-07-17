@@ -47,6 +47,12 @@ public class Data implements Cloneable{
         return normalized;
     }
 
+    public Data getNormalizedData() {
+        Data d = new Data();
+        d.load(this.normalized);
+        return d;
+    }
+
     public int[] getDimensions() {
         return dimensions;
     }
@@ -104,6 +110,20 @@ public class Data implements Cloneable{
     public Data() {
         this.dimensions = new int[2];
         this.data = new double[1][1];
+    }
+
+    public void load(double[][] datos){
+        this.dimensions[0] = datos.length;
+        this.dimensions[1] = datos[0].length;
+        this.data = datos.clone();
+        this.normalized = new double[this.dimensions[0]][this.dimensions[1]];
+//        this.normalized = Utils.Utils.Normalize(data);
+        for (int i=0; i<data.length;i++){
+            double[] norm = Utils.Utils.Normalize(Arrays.copyOfRange(data[i], 1, data[i].length-1));
+            normalized[i][0] = data[i][0];
+            System.arraycopy(norm, 0, normalized[i], 1, norm.length);
+        }
+        this.setClassesInfo();
     }
     
     public void load(MLArray filecontent){

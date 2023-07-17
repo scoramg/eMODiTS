@@ -7,6 +7,7 @@
 package Individuals.PEVOMO;
 
 import DataMining.Classification.Classification;
+import DataMining.Classification.StatisticRatesCollection;
 import DataSets.Data;
 import Interfaces.IScheme;
 import DataSets.DataSet;
@@ -49,10 +50,13 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     
     
     private double ErrorRate;
-    private double[] ErrorRatesByFolds;
+//    private double[] ErrorRatesByFolds;
     private String DecisionTreeGraph;
     private List<Prediction> predictions;
     private List<Integer> correctPredictions;
+//    public double[][] MatrixConfusion;
+    public StatisticRatesCollection statistic_rates;
+    public Classification csf;
 //    private String DiscretizedString;
 
 //    private DiscretizedDataSet ds_dis;
@@ -102,10 +106,10 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     public Scheme(){
         this.word = new Word();
         this.alphabet = new Alphabet();
-        this.ErrorRatesByFolds = new double[10];
-        for (int i=0;i<10;i++){
-            this.ErrorRatesByFolds[i] = Double.NaN;
-        }
+//        this.ErrorRatesByFolds = new double[10];
+//        for (int i=0;i<10;i++){
+//            this.ErrorRatesByFolds[i] = Double.NaN;
+//        }
     }
     
     public Scheme(Word word, Alphabet alphabet, boolean isSelfAdaptation, int iFitnessFunctionConf) {
@@ -113,10 +117,10 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         this.alphabet = alphabet;
         this.isSelfAdaptation = isSelfAdaptation;
         this.fitness_function = new FitnessFunction(iFitnessFunctionConf);
-        this.ErrorRatesByFolds = new double[10];
-        for (int i=0;i<10;i++){
-            this.ErrorRatesByFolds[i] = Double.NaN;
-        }
+//        this.ErrorRatesByFolds = new double[10];
+//        for (int i=0;i<10;i++){
+//            this.ErrorRatesByFolds[i] = Double.NaN;
+//        }
     }
     
     @Override
@@ -276,11 +280,11 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
             general_params.exporter.add("alphabet", DataAlphabet);
             
             
-//            float[][] DataFunctionValues = new float[1][this.fitness_function.getNoFunctions()];
-//            for(int i=0;i<this.fitness_function.getNoFunctions();i++){
-//                DataFunctionValues[0][i] = (float) this.fitness_function.getEvaluatedValues()[i];
-//            }
-//            general_params.exporter.add("fitness_values", DataFunctionValues);
+            float[][] DataFunctionValues = new float[1][this.fitness_function.getNoFunctions()];
+            for(int i=0;i<this.fitness_function.getNoFunctions();i++){
+                DataFunctionValues[0][i] = (float) this.fitness_function.getEvaluatedValues()[i];
+            }
+            general_params.exporter.add("fitness_values", DataFunctionValues);
             
             float[][] er = new float[1][1];
             er[0][0] = (float) getErrorRate();
@@ -528,7 +532,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
             
             J48 j48 = new J48();
             
-            Classification csf = new Classification();
+            csf = new Classification();
             if(UsingTest){
                 csf = new Classification(dataset.getTrain(), dataset.getTest());
                 switch (set_type){
@@ -536,8 +540,8 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                         csf.ClassifyWithTraining(j48);
                         break;
                     case "WithCV":
-                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
-                        this.ErrorRatesByFolds = errors.clone();
+                        csf.ClassifyByCVInTest(j48, 10);
+//                        this.ErrorRatesByFolds = errors.clone();
                         break;
                     default:
                         csf.ClassifyWithTraining(j48);
@@ -563,14 +567,15 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                         break;
                 } 
                 csf = new Classification(data);
-                double[] errors = csf.ClassifyByCrossValidation(j48);
-                this.ErrorRatesByFolds = errors.clone();
-                this.ErrorRate = mimath.MiMath.getMedia(errors);
+                csf.ClassifyByCrossValidation(j48);
+//                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(csf.eval.getErrorRatesByFolds());
 //                this.predictions = csf.getPredictions();
             }
             this.predictions = csf.getPredictions();
             this.getCorrectPredictions(csf.getPredictions());
-            
+//            this.MatrixConfusion = csf.getMatrixConfusion();
+            statistic_rates = new StatisticRatesCollection(csf);
             this.DecisionTreeGraph = j48.graph();
             
             
@@ -587,7 +592,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
             
             J48 j48 = new J48();
             
-            Classification csf = new Classification();
+            csf = new Classification();
             if(UsingTest){
                 DiscretizedData ds_dis_train = this.DiscretizeByPAA(dataset.getTrain());
                 DiscretizedData ds_dis_test = this.DiscretizeByPAA(dataset.getTest());
@@ -597,8 +602,8 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                         csf.ClassifyWithTraining(j48);
                         break;
                     case "WithCV":
-                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
-                        this.ErrorRatesByFolds = errors.clone();
+                        csf.ClassifyByCVInTest(j48, 10);
+//                        this.ErrorRatesByFolds = errors.clone();
                         break;
                     default:
                         csf.ClassifyWithTraining(j48);
@@ -640,15 +645,16 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
                         break;
                 } 
                 csf = new Classification(data);
-                double[] errors = csf.ClassifyByCrossValidation(j48);
-                this.ErrorRatesByFolds = errors.clone();
-                this.ErrorRate = mimath.MiMath.getMedia(errors);
+                csf.ClassifyByCrossValidation(j48);
+//                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(csf.eval.getErrorRatesByFolds());
 //                this.predictions = csf.getPredictions();
                 data.destroy();
             }
             this.predictions = csf.getPredictions();
             this.getCorrectPredictions(csf.getPredictions());
-            
+//            this.MatrixConfusion = csf.getMatrixConfusion();
+            statistic_rates = new StatisticRatesCollection(csf);
             this.DecisionTreeGraph = j48.graph();
 //            this.DiscretizedString = ds_dis.getOriginal().PrintStrings();
             
@@ -724,10 +730,11 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
 
         File FileDir = new File(directory);
         if(!FileDir.exists()) FileDir.mkdirs();
-
+//        System.out.println(directory+"/"+FileName+".txt");
         try(  PrintWriter out = new PrintWriter( directory+"/"+FileName+".txt" )  ){
-               out.println( this.DecisionTreeGraph );
+            out.println( this.DecisionTreeGraph );
         } catch (FileNotFoundException ex) {
+//            System.out.println(ex);
             Logger.getLogger(Scheme.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -807,8 +814,8 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     }
 
     @Override
-    public double[] getErrorRatesByFolds() {
-        return ErrorRatesByFolds;
+    public Classification getClassificationModel() {
+        return this.csf;
     }
 
     @Override
@@ -941,7 +948,7 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
         if(!FileDir.exists()) FileDir.mkdirs();
 
         try(  PrintWriter out = new PrintWriter( directory+"/"+FileName+".csv" )  ){
-            for(double d: this.ErrorRatesByFolds){
+            for(double d: this.csf.eval.getErrorRatesByFolds()){
                out.println(d);
             }
         } catch (FileNotFoundException ex) {
@@ -961,6 +968,39 @@ public class Scheme implements IScheme, Cloneable, Comparable<IScheme> {
     @Override
     public List<Integer> getCorrectPredictions() {
         return this.correctPredictions;
+    }
+
+    @Override
+    public StatisticRatesCollection getStatisticRateCollection() {
+        return this.statistic_rates;
+    }
+
+    @Override
+    public double[] getStatisticalData(int type) {
+        double[] res = new double[this.csf.getNumFolds()];
+        switch(type){
+            case 1: //ErrorRates
+                res = this.csf.eval.getErrorRatesByFolds().clone();
+                break;
+            case 2:
+                res = this.csf.eval.getFMeasureByfolds().clone();
+                break;
+        }
+        return res;
+    }
+
+    @Override
+    public double getMeasureData(int type) {
+        double res = Double.NEGATIVE_INFINITY;
+        switch(type){
+            case 1: //ErrorRates
+                res = this.getErrorRate();
+                break;
+            case 2:
+                res = this.getStatisticRateCollection().eval.weightedFMeasure();
+                break;
+        }
+        return res;
     }
 
 }

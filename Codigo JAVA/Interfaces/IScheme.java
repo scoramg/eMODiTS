@@ -5,6 +5,8 @@
  */
 package Interfaces;
 
+import DataMining.Classification.Classification;
+import DataMining.Classification.StatisticRatesCollection;
 import DataSets.Data;
 import DataSets.DataSet;
 import DataSets.DiscretizedData;
@@ -66,7 +68,7 @@ public interface IScheme {
     public void add(double[][] front);
     public void add(Object o);
     public void sort();
-    public double[] getErrorRatesByFolds();
+    public Classification getClassificationModel();
     public List<Prediction> getPredictions();
     public void getCorrectPredictions(List<Prediction> predictions);
     public List<Integer> getCorrectPredictions();
@@ -74,6 +76,7 @@ public interface IScheme {
     
     public double getErrorRate();
     public String getDecisionTreeGraph();
+    public StatisticRatesCollection getStatisticRateCollection();
     
     public void Classify(DataSet dataset, boolean UsingTest, String set_type);
     public void Classify(DiscretizedDataSet dataset, boolean UsingTest, String set_type);
@@ -88,5 +91,6 @@ public interface IScheme {
     public float[][] Elements2FloatArray();
     public void Export2JSON(DataSet ds, String Location);
     public void ExportErrorRates(DataSet ds, String folder, String Location, String type_selection);
-    
+    public double[] getStatisticalData(int type);
+    public double getMeasureData(int type);
 }

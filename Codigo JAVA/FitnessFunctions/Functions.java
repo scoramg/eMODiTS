@@ -154,6 +154,7 @@ public class Functions {
         }
         
         return (double) sum/ds.getNormalized().length;
+        //return mimath.MiMath.MSE(ds.getMedia(true), ds_res.getMedia());
     }
     
     public static double KnnAccuracy(DataSets.DiscretizedData ds_dis){

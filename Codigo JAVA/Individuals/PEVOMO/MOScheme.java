@@ -6,6 +6,7 @@
 package Individuals.PEVOMO;
 
 import DataMining.Classification.Classification;
+import DataMining.Classification.StatisticRatesCollection;
 import DataSets.Data;
 import DataSets.DataSet;
 import DataSets.DiscretizedData;
@@ -53,11 +54,14 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     private double CrowdingDistance;
     
     private double ErrorRate;
-    private double[] ErrorRatesByFolds;
+//    private double[] ErrorRatesByFolds;
     private List<Prediction> predictions;
     private String DecisionTreeGraph;
     private List<Integer> correctPredictions;
+//    public double[][] MatrixConfusion;
 //    private String DiscretizedString;
+    public StatisticRatesCollection statistic_rates;
+    public Classification csf;
     
 //    private DiscretizedDataSet ds_dis;
     
@@ -181,10 +185,10 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         CrowdingDistance=0;
         ErrorRate = Double.NaN;
         DecisionTreeGraph = "";
-        this.ErrorRatesByFolds = new double[10];
-        for (int i=0;i<10;i++){
-            this.ErrorRatesByFolds[i] = Double.NaN;
-        }
+//        this.ErrorRatesByFolds = new double[10];
+//        for (int i=0;i<10;i++){
+//            this.ErrorRatesByFolds[i] = Double.NaN;
+//        }
     }
     
     public MOScheme(Data ds, double[][] limits, int iFitnessFunctionConf) {
@@ -376,11 +380,11 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
             exporter.add("alphabet", DataAlphabet);
             
             
-//            float[][] DataFunctionValues = new float[1][this.getEvaluatedValues().length];
-//            for(int i=0;i<this.getEvaluatedValues().length;i++){
-//                DataFunctionValues[0][i] = (float) this.fitness_function.getEvaluatedValues()[i];
-//            }
-//            exporter.add("fitness_values", DataFunctionValues);
+           float[][] DataFunctionValues = new float[1][this.getEvaluatedValues().length];
+           for(int i=0;i<this.getEvaluatedValues().length;i++){
+               DataFunctionValues[0][i] = (float) this.fitness_function.getEvaluatedValues()[i];
+           }
+           exporter.add("fitness_values", DataFunctionValues);
             
             float[][] er = new float[1][1];
             er[0][0] = (float) getErrorRate();
@@ -634,7 +638,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
             
             J48 j48 = new J48();
             
-            Classification csf = new Classification();
+            csf = new Classification();
             if(UsingTest){
                 csf = new Classification(dataset.getTrain(), dataset.getTest());
                 switch (set_type){
@@ -642,8 +646,8 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
                         csf.ClassifyWithTraining(j48);
                         break;
                     case "WithCV":
-                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
-                        this.ErrorRatesByFolds = errors.clone();
+                        csf.ClassifyByCVInTest(j48, 10);
+//                        this.ErrorRatesByFolds = errors.clone();
                         break;
                     default:
                         csf.ClassifyWithTraining(j48);
@@ -669,14 +673,15 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
                         break;
                 } 
                 csf = new Classification(data);
-                double[] errors = csf.ClassifyByCrossValidation(j48);
-                this.ErrorRatesByFolds = errors.clone();
-                this.ErrorRate = mimath.MiMath.getMedia(errors);
+                csf.ClassifyByCrossValidation(j48);
+//                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(csf.eval.getErrorRatesByFolds());
 //                this.predictions = csf.getPredictions();
             }
             this.predictions = csf.getPredictions();
             this.getCorrectPredictions(csf.getPredictions());
-            
+//            this.MatrixConfusion = csf.getMatrixConfusion();
+            statistic_rates = new StatisticRatesCollection(csf);
             this.DecisionTreeGraph = j48.graph();
             
             
@@ -693,7 +698,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
             
             J48 j48 = new J48();
             
-            Classification csf = new Classification();
+            csf = new Classification();
             if(UsingTest){
                 
                 DiscretizedData ds_dis_train = this.DiscretizeByPAA(dataset.getTrain());
@@ -704,8 +709,8 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
                         csf.ClassifyWithTraining(j48);
                         break;
                     case "WithCV":
-                        double[] errors = csf.ClassifyByCVInTest(j48, 10);
-                        this.ErrorRatesByFolds = errors.clone();
+                        csf.ClassifyByCVInTest(j48, 10);
+//                        this.ErrorRatesByFolds = errors.clone();
                         break;
                     default:
                         csf.ClassifyWithTraining(j48);
@@ -748,14 +753,15 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
                         break;
                 } 
                 csf = new Classification(data);
-                double[] errors = csf.ClassifyByCrossValidation(j48);
-                this.ErrorRatesByFolds = errors.clone();
-                this.ErrorRate = mimath.MiMath.getMedia(errors);
+                csf.ClassifyByCrossValidation(j48);
+//                this.ErrorRatesByFolds = errors.clone();
+                this.ErrorRate = mimath.MiMath.getMedia(csf.eval.getErrorRatesByFolds());
 //                this.predictions = csf.getPredictions();
             }
             this.predictions = csf.getPredictions();
             this.getCorrectPredictions(csf.getPredictions());
-            
+//            this.MatrixConfusion = csf.getMatrixConfusion();
+            statistic_rates = new StatisticRatesCollection(csf);
             this.DecisionTreeGraph = j48.graph();
 //            this.DiscretizedString = ds_dis.getOriginal().PrintStrings();
             
@@ -827,8 +833,8 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     }
     
     @Override
-    public double[] getErrorRatesByFolds() {
-        return ErrorRatesByFolds;
+    public Classification getClassificationModel() {
+        return csf;
     }
 
     @Override
@@ -919,9 +925,9 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         List<Integer> diffs = Cuts2Intervals();
         List<Integer> maximums = this.getTotalCuts();
         
-        System.out.println("ds_dis.dimensions: ["+ds_dis.getDimensions()[0]+","+ds_dis.getDimensions()[1]+"]");
-        System.out.println("diffs:"+diffs.toString());
-        System.out.println("maximums:"+maximums.toString());
+        //System.out.println("ds_dis.dimensions: ["+ds_dis.getDimensions()[0]+","+ds_dis.getDimensions()[1]+"]");
+        //System.out.println("diffs:"+diffs.toString());
+        //System.out.println("maximums:"+maximums.toString());
         
         for(int f=0; f<ds_dis.getIds_discretized().length;f++){
             double[] row = new double[1];
@@ -972,7 +978,7 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
         if(!FileDir.exists()) FileDir.mkdirs();
 
         try(  PrintWriter out = new PrintWriter( directory+"/"+FileName+".csv" )  ){
-            for(double d: this.ErrorRatesByFolds){
+            for(double d: this.csf.eval.getErrorRatesByFolds()){
                out.println(d);
             }
         } catch (FileNotFoundException ex) {
@@ -992,5 +998,38 @@ public class MOScheme implements IScheme, Cloneable, Comparable<IScheme> {
     @Override
     public List<Integer> getCorrectPredictions() {
         return this.correctPredictions;
+    }
+
+    @Override
+    public StatisticRatesCollection getStatisticRateCollection() {
+        return this.statistic_rates;
+    }
+
+    @Override
+    public double[] getStatisticalData(int type) {
+        double[] res = new double[this.csf.getNumFolds()];
+        switch(type){
+            case 1: //ErrorRates
+                res = this.csf.eval.getErrorRatesByFolds().clone();
+                break;
+            case 2:
+                res = this.csf.eval.getFMeasureByfolds().clone();
+                break;
+        }
+        return res;
+    }
+
+    @Override
+    public double getMeasureData(int type) {
+        double res = Double.NEGATIVE_INFINITY;
+        switch(type){
+            case 1: //ErrorRates
+                res = this.getErrorRate();
+                break;
+            case 2:
+                res = this.getStatisticRateCollection().eval.weightedFMeasure();
+                break;
+        }
+        return res;
     }
 }

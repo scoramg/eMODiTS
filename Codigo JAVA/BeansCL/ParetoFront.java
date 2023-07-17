@@ -3,39 +3,37 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package ParetoFront;
+package BeansCL;
 
-import DataSets.DataSet;
-import Interfaces.IScheme;
+//import DataSets.DataSet;
+//import Interfaces.IScheme;
 import ca.nengo.io.MatlabExporter;
-import comparators.ComparatorByErrorRates;
+import BeansCL.comparators.ComparatorByErrorRates;
 import java.util.ArrayList;
-//import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-//import parameters.Locals;
 
 /**
  *
  * @author amarquezgr
  */
 public final class ParetoFront {
-    private List<IScheme> Front;
+    private List<HistogramScheme> Front;
 
     public ParetoFront() {
         this.Front = new ArrayList<>();
     }
 
-    public void setFront(List<IScheme> front) {
+    public void setFront(List<HistogramScheme> front) {
         this.Front = front;
     }
 
-    public List<IScheme> getFront() {
+    public List<HistogramScheme> getFront() {
         return Front;
     }
 
-    public void addData(IScheme data){
-        this.Front.add(data.clone());
+    public void addData(HistogramScheme data){
+        this.Front.add(data);
     }
     
     //f1 dominates f2
@@ -200,20 +198,20 @@ public final class ParetoFront {
         return this.Front.size();
     }
     
-    public void classify(DataSet ds, boolean UsingTest){
+    public void classify(HistogramDataSet ds, boolean UsingTest){
         for(int i=0;i<this.Front.size();i++){
             Front.get(i).Classify(ds, UsingTest, "train");
         }
     }
     
-    public IScheme getBest(DataSet ds, boolean UsingTest){
+    public HistogramScheme getBest(HistogramDataSet ds, boolean UsingTest){
         classify(ds,UsingTest);
         Collections.sort(Front,new ComparatorByErrorRates());
 //        System.out.println(PrintErrorRates());
         return Front.get(0);
     }
     
-    public IScheme getKnee(double[] reference){
+    public HistogramScheme getKnee(double[] reference){
         double min = Double.POSITIVE_INFINITY;
         int ind = 0;
         for (int i=0;i<Front.size();i++){
@@ -241,7 +239,7 @@ public final class ParetoFront {
         StringBuilder sb = new StringBuilder();
         sb.append("Front Size:").append(this.Front.size()).append("\n");
         sb.append("Data:").append("\n");
-        for(IScheme a:this.Front){
+        for(HistogramScheme a:this.Front){
             sb.append(a.toString()).append("\n");
         }
         return sb.toString();
@@ -260,11 +258,6 @@ public final class ParetoFront {
         for(int i=0;i<this.Front.size();i++){
             float[][] data = this.Front.get(i).Elements2FloatArray();
             exporter.add("FrontIndividual"+i, data);
-            float[][] DataFunctionValues = new float[1][this.Front.get(i).getEvaluatedValues().length];
-            for(int j=0;j<this.Front.get(i).getEvaluatedValues().length;j++){
-                DataFunctionValues[0][j] = (float) this.Front.get(i).getFitnessFunction().getEvaluatedValues()[j];
-            }
-            exporter.add("EvaluatedValues"+i,DataFunctionValues);
         }
     }
     

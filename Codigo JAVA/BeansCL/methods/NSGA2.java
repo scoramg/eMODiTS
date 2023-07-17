@@ -3,33 +3,37 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package methods.multiobjective;
+package BeansCL.methods;
 
-import Algorithms.selection.TournamentSelection;
-import DataSets.Data;
-import Interfaces.*;
-import ParetoFront.ParetoFront;
-//import ParetoFront.ParetoFrontCollection;
-
+//import Algorithms.selection.TournamentSelection;
+//import DataSets.Data;
+//import Interfaces.*;
+//import ParetoFront.ParetoFront;
+import BeansCL.HistogramCollection;
+import BeansCL.HistogramScheme;
+import BeansCL.ParetoFront;
+import BeansCL.Population;
+import BeansCL.parameters.Generals;
+import BeansCL.parameters.Locals;
+import BeansCL.selection.TournamentSelection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import parameters.Generals;
-import parameters.Locals;
+//import parameters.Generals;
+//import parameters.Locals;
 
 /**
  *
  * @author amarquezgr
  */
-public class NSGA2 implements iMethod {
+public class NSGA2 {
     
-    public List<ParetoFront> fronts;
+    List<ParetoFront> fronts;
 
     public NSGA2() {
        fronts = new ArrayList<>();
     }
 
-    @Override
     public void Execute(Generals general_params, Locals local_params) {
         System.out.println("NSGA II");
         fronts = new ArrayList<>();
@@ -38,25 +42,25 @@ public class NSGA2 implements iMethod {
         double[] stds = new double[general_params.getnGenerations()]; //****
         local_params.setTimeAlgorithm(System.currentTimeMillis());
         
-        Data ds = new Data();
+        HistogramCollection ds = new HistogramCollection();
         
         switch(general_params.getTypeDataSet()){
             case 0:
-                ds = local_params.getDs().getOriginal();
+                ds = local_params.getDs().getHistComplete();
                 break;
             case 1:
-                ds = local_params.getDs().getTrain();
+                ds = local_params.getDs().getHistTrain();
                 break;
             case 2:
-                ds = local_params.getDs().getTest();
+                ds = local_params.getDs().getHistTest();
                 break;
         }
         
-        general_params.population.Generate(general_params.getiApproach(), ds, local_params.getDs().getLimits(), general_params.getiFitnessFunctionConf());
+        general_params.population.Generate(ds, general_params.getiFitnessFunctionConf());
         general_params.population.Evaluate(ds, general_params.getWeights());
         
         for(int g=0; g<general_params.getnGenerations();g++){
-            System.out.println("Running execution: "+(local_params.getExecution()+1)+", Generation:"+(g+1)+", Front Size:"+FastNonDominatedSort(general_params.accumulatedFront).get(0).size());
+            System.out.println("Running execution: "+(local_params.getExecution()+1)+", Generation:"+(g+1));
             fronts = FastNonDominatedSort(general_params.population);
             CalcCrowdingDistance();
             
@@ -64,11 +68,11 @@ public class NSGA2 implements iMethod {
             populations.add(general_params.population.getArrayFitnessValuesWithRank());
             
             TournamentSelection parents = new TournamentSelection(general_params.population, general_params.getOpponents());
-            IPopulation offsprings = parents.selected.CreateOffsprings(general_params, ds);
-            offsprings = offsprings.Mutate(general_params.getMutationRate(), ds,local_params.getDs().getLimits());
+            Population offsprings = parents.selected.CreateOffsprings(general_params);
+            offsprings = offsprings.Mutate(general_params.getMutationRate(), local_params.getDs().getHistTrain().getData().get(0).getDimensions());
             offsprings.Evaluate(ds, general_params.getWeights());
             
-            IPopulation joined = general_params.population.Join(offsprings);
+            Population joined = general_params.population.Join(offsprings);
             
 //            System.out.println("Joined: "+joined.toString());
             
@@ -77,7 +81,7 @@ public class NSGA2 implements iMethod {
             
 //            System.out.println("Joined Ranked: "+joined.toString());
             
-            IPopulation newpop = NewPopulationFromFronts(general_params.population);
+            Population newpop = NewPopulationFromFronts(general_params.population);
             
 //            System.out.println("New Population: "+newpop.toString());
             stds[g] = mimath.MiMath.getDesviacionStandar(newpop.getAllFitnessValue());
@@ -102,7 +106,7 @@ public class NSGA2 implements iMethod {
         local_params.ParetoFronts = ParetoList2FloatArray(first_fronts);
         local_params.FinalParetoFront = fronts.get(0).toFloatArray();
         local_params.populations = PopulationList2FloatArray(populations);
-        general_params.execution_front.add(fronts.get(0));
+        
 //        general_params.misclassification_rates[local_params.getExecution()][0] = local_params.getExecution()+1;
 //        general_params.misclassification_rates[local_params.getExecution()][1] = (float) best.getErrorRate();
 //        
@@ -112,7 +116,7 @@ public class NSGA2 implements iMethod {
         //Exportar el frente de pareto
     }
     
-    public static List<ParetoFront> FastNonDominatedSort(IPopulation mopopulation){
+    public static List<ParetoFront> FastNonDominatedSort(Population mopopulation){
         List<ParetoFront> Fronts = new ArrayList<>();
         ParetoFront F1 = new ParetoFront();
         int ranked=0;
@@ -195,7 +199,7 @@ public class NSGA2 implements iMethod {
                     } else {      
                         
                         for(int m=0;m<fronts.get(f).getFront().get(0).getFitnessFunction().getNoFunctions();m++){
-                            Collections.sort(fronts.get(f).getFront(), new comparators.ComparatorByFitnessFunctions(m));
+                            Collections.sort(fronts.get(f).getFront(), new BeansCL.comparators.ComparatorByFitnessFunctions(m));
                             fronts.get(f).getFront().get(0).setCrowdingDistance(Double.POSITIVE_INFINITY);
                             fronts.get(f).getFront().get(fronts.get(f).getFront().size()-1).setCrowdingDistance(Double.POSITIVE_INFINITY);
                             double fmax = fronts.get(f).getFront().get(fronts.get(f).getFront().size()-1).getEvaluatedValues()[m];
@@ -213,8 +217,8 @@ public class NSGA2 implements iMethod {
         }
     }
     
-    public IPopulation NewPopulationFromFronts(IPopulation pop){
-        IPopulation newpopulation = pop.clone();
+    public Population NewPopulationFromFronts(Population pop){
+        Population newpopulation = pop.clone();
         newpopulation.reset();
         newpopulation.setLength(pop.getLength());
         
@@ -222,14 +226,14 @@ public class NSGA2 implements iMethod {
         
         for(int f=0; f<fronts.size();f++){
             if((t+fronts.get(f).size()) < pop.getLength()){
-                for(IScheme sch: fronts.get(f).getFront()){
+                for(HistogramScheme sch: fronts.get(f).getFront()){
                     newpopulation.getIndividuals()[t] = sch.clone();
                     t++;
                 }
             } else {
                 int j=0;
-                List<IScheme> last = fronts.get(f).getFront();
-                Collections.sort(last, new comparators.ComparatorByRankingAndCrowdingDistance());
+                List<HistogramScheme> last = fronts.get(f).getFront();
+                Collections.sort(last, new BeansCL.comparators.ComparatorByRankingAndCrowdingDistance());
                 while(t<pop.getLength()){
                     newpopulation.getIndividuals()[t] = last.get(j).clone();
                     t++;

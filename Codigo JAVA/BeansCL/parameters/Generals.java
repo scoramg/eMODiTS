@@ -3,11 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package parameters;
+package BeansCL.parameters;
 
-import Interfaces.IPopulation;
-import ParetoFront.ParetoFrontCollection;
 //import Populations.*;
+import BeansCL.Population;
 import ca.nengo.io.MatlabExporter;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,7 @@ import mimath.MiMath;
  * @author amarquezgr
  */
 public class Generals implements Cloneable{
-    public IPopulation population, accumulatedFront;
+    public Population population, accumulatedFront;
 //    public MOPopulation MOPopulation;
     private int iFitnessFunctionConf, iAlgorithm;
     private int iApproach, nExecutions, nGenerations, opponents;
@@ -32,13 +31,12 @@ public class Generals implements Cloneable{
     public float[][] misclassification_rates;
     private float[][] Statistics;
     private int TypeDataSet; //0-Todo, 1-Train, 2-Test
-    public ParetoFrontCollection execution_front;
 
-    public IPopulation getPopulation() {
+    public Population getPopulation() {
         return population;
     }
 
-    public IPopulation getAccumulatedFront() {
+    public Population getAccumulatedFront() {
         return accumulatedFront;
     }
 
@@ -107,11 +105,11 @@ public class Generals implements Cloneable{
         this.misclassification_rates = new float[nExecutions][3];
     }
     
-    public void setPopulation(IPopulation population) {
+    public void setPopulation(Population population) {
         this.population = population;
     }
 
-    public void setAccumulatedFront(IPopulation accumulatedFront) {
+    public void setAccumulatedFront(Population accumulatedFront) {
         this.accumulatedFront = accumulatedFront;
     }
 
@@ -167,10 +165,9 @@ public class Generals implements Cloneable{
         this.exporter = new MatlabExporter();
 //        this.population = new Population();
         this.Statistics = new float[1][5];
-        this.execution_front = new ParetoFrontCollection();
     }
     
-    public Generals(int nExecutions, int iFitnessFunctionConf, int PopulationSize, int iApproach, int nGenerations, int opponents, boolean isSelfAdaption, double[] weights, double MutationRate, long totalTime, double CrossOverRate, int iAlgorithm, IPopulation population, int TypeDataSet) {
+    public Generals(int nExecutions, int iFitnessFunctionConf, int PopulationSize, int iApproach, int nGenerations, int opponents, boolean isSelfAdaption, double[] weights, double MutationRate, long totalTime, double CrossOverRate, int iAlgorithm, Population population, int TypeDataSet) {
         this.nExecutions = nExecutions;
         this.iFitnessFunctionConf = iFitnessFunctionConf;
         this.iApproach = iApproach;
@@ -187,7 +184,6 @@ public class Generals implements Cloneable{
         this.Statistics = new float[1][5];
         this.iAlgorithm = iAlgorithm;
         this.TypeDataSet = TypeDataSet;
-        this.execution_front = new ParetoFrontCollection();
     }
     
     public void CalculateStatistics(){

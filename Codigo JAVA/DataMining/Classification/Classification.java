@@ -7,22 +7,24 @@ package DataMining.Classification;
 
 
 import java.io.File;
-import java.io.IOException;
+//import java.io.IOException;
 import java.util.ArrayList;
+//import java.util.HashMap;
 import java.util.List;
+//import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.math3.stat.inference.WilcoxonSignedRankTest;
-import weka.associations.Apriori;
-import weka.associations.AssociatorEvaluation;
+//import org.apache.commons.math3.stat.inference.WilcoxonSignedRankTest;
+//import weka.associations.Apriori;
+//import weka.associations.AssociatorEvaluation;
 import weka.classifiers.Classifier;
-import weka.classifiers.Evaluation;
+//import weka.classifiers.Evaluation;
 import weka.classifiers.evaluation.Prediction;
 import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.Clusterer;
-import weka.core.AbstractInstance;
+//import weka.core.AbstractInstance;
 import weka.core.Attribute;
 import weka.core.Debug;
 import weka.core.DenseInstance;
@@ -39,13 +41,16 @@ import weka.filters.unsupervised.attribute.Reorder;
  *
  * @author root
  */
-public final class Classification {
+public final class Classification implements Cloneable {
 //    Classifier classifier;
     Instances DataSource;
     Instances DataTrain;
     Instances DataTest;
     double errorRate;
     List<Prediction> predictions;
+    double[][] MatrixConfusion;
+    public Evaluation eval;
+    
 //    MiClasificador mCl;
 
     public Instances getDataSource() {
@@ -64,9 +69,16 @@ public final class Classification {
         return errorRate;
     }
 
-
+    public int getNumFolds(){
+        return this.eval.m_delegate.getNumFolds();
+    }
+    
     public List<Prediction> getPredictions() {
         return predictions;
+    }
+
+    public double[][] getMatrixConfusion() {
+        return MatrixConfusion;
     }
     
     public void setDataSource(Instances DataSource) {
@@ -102,6 +114,7 @@ public final class Classification {
         try {
             this.DataSource = ImportFrom("DataSource",DataSource);
             this.errorRate = Double.NaN;
+            eval = new Evaluation(this.DataSource);
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -118,8 +131,13 @@ public final class Classification {
     }
     
     public Classification(Instances DataSource) {    
-        this.DataSource = DataSource;
-        this.errorRate = Double.NaN;
+        try {
+            this.DataSource = DataSource;
+            this.errorRate = Double.NaN;
+            eval = new Evaluation(this.DataSource);
+        } catch (Exception ex) {
+            Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
+        }
     } 
 
     public Classification(Instances DataTrain, Instances DataTest) {
@@ -143,36 +161,47 @@ public final class Classification {
         this.DataTest = ImportFrom("DataTest", structure, DataTest);
         
         this.errorRate = Double.NaN;
+        eval = new Evaluation(this.DataSource);
     }
     
     public Classification(Instances DataSource, Instances DataTrain, Instances DataTest) {    
-        this.DataSource = DataSource;
-        this.DataTrain = DataTrain;
-        this.DataTest = DataTest;
-        this.errorRate = Double.NaN;
-    }
-    
-    public double[] ClassifyByCrossValidation(Classifier classifier){
         try {
-            System.out.println(DataSource.numInstances());
-            classifier.buildClassifier(DataSource);
-            Evaluation evalTrainCV = new Evaluation(DataSource);
-            double[] res = evalTrainCV.crossValidateModel2(classifier, DataSource, 10, new Random(1));                
-            this.setErrorRate(mimath.MiMath.getMedia(res));
-            this.predictions = new ArrayList<>(evalTrainCV.predictions());    
-            return res;
+            this.DataSource = DataSource;
+            this.DataTrain = DataTrain;
+            this.DataTest = DataTest;
+            this.errorRate = Double.NaN;
+            eval = new Evaluation(this.DataSource);
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
         }
     }
     
-    public double[] ClassifyByCVInTest(Classifier classifier, int numFolds){
-        double[] res = new double[numFolds];
+    public void ClassifyByCrossValidation(Classifier classifier){
+        try {
+//            System.out.println(DataSource.numInstances());
+            classifier.buildClassifier(DataSource);
+//            Evaluation evalTrainCV = new Evaluation(DataSource);
+            this.eval = new Evaluation(DataSource);
+            this.eval.crossValidateModel2(classifier, DataSource, 10, new Random(1));   
+            //double[] res = this.eval.getErrorRatesByFolds();
+            this.MatrixConfusion = this.eval.confusionMatrix();
+            //this.setErrorRate(mimath.MiMath.getMedia(res));
+            this.setErrorRate(mimath.MiMath.getMedia(this.eval.getErrorRatesByFolds()));
+            this.predictions = new ArrayList<>(this.eval.predictions());    
+            //return res;
+        } catch (Exception ex) {
+            Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
+            //return null;
+        }
+    }
+    
+    public void ClassifyByCVInTest(Classifier classifier, int numFolds){
+        
         this.predictions = new ArrayList<>();
         try {
             classifier.buildClassifier(DataTrain);
-            Evaluation evalTest = new Evaluation(DataTest);
+//            Evaluation evalTest = new Evaluation(DataTest);
+            this.eval = new Evaluation(DataTest);
             Instances test = new Instances(DataTest);
 //            System.out.println("Test:");
 //            System.out.println(test.toString());
@@ -180,28 +209,31 @@ public final class Classification {
             test.stratify(numFolds);
             for(int i=0; i<numFolds;i++){
                 Instances testf = test.testCV(numFolds, i);
-                evalTest.evaluateModel(classifier, testf); 
-                res[i] = (double) evalTest.pctIncorrect()/(double) 100;
-                for(Prediction e: evalTest.predictions()){
+                this.eval.evaluateModel(classifier, testf); 
+                this.eval.setStatistics(i);
+//                res[i] = (double) this.eval.pctIncorrect()/(double) 100;
+                for(Prediction e: this.eval.predictions()){
                     this.predictions.add(e);
                 }
             }
             
-            this.setErrorRate(mimath.MiMath.getMedia(res));
+            this.setErrorRate(mimath.MiMath.getMedia(this.eval.getErrorRatesByFolds()));
 
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return res;
+//        return res;
     }
     
     public void ClassifyWithTraining(Classifier classifier){
         try {
             classifier.buildClassifier(DataTrain);
-            Evaluation evalTest = new Evaluation(DataTrain);  
-            evalTest.evaluateModel(classifier, DataTest); 
-            this.setErrorRate((double) evalTest.pctIncorrect()/(double) 100);
-            this.predictions = new ArrayList<>(evalTest.predictions());
+//            Evaluation evalTest = new Evaluation(DataTrain);  
+            this.eval = new Evaluation(DataTrain);  
+            this.eval.evaluateModel(classifier, DataTest); 
+            this.MatrixConfusion = this.eval.confusionMatrix();
+            this.setErrorRate((double) this.eval.pctIncorrect()/(double) 100);
+            this.predictions = new ArrayList<>(this.eval.predictions());
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -212,10 +244,12 @@ public final class Classification {
             DataTrain.setClassIndex(IndexClassTrain);                
             classifier.buildClassifier(DataTrain);
             DataTest.setClassIndex(IndexClassTest);
-            Evaluation evalTest = new Evaluation(DataTrain);  
-            evalTest.evaluateModel(classifier, DataTest); 
-            this.setErrorRate((double) evalTest.pctIncorrect()/100);
-            this.predictions = new ArrayList<>(evalTest.predictions());
+//            Evaluation evalTest = new Evaluation(DataTrain);  
+            this.eval = new Evaluation(DataTrain);
+            this.eval.evaluateModel(classifier, DataTest); 
+            this.MatrixConfusion = this.eval.confusionMatrix();
+            this.setErrorRate((double) this.eval.pctIncorrect()/100);
+            this.predictions = new ArrayList<>(this.eval.predictions());
         } catch (Exception ex) {
             Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -586,6 +620,26 @@ public final class Classification {
         }
         sb.append("\n").append("errorRate = ").append(this.errorRate);
         return sb.toString();
+    }
+    
+    @Override
+    public Classification clone(){
+        try {
+            super.clone();
+            Classification clon = new Classification();
+            clon.DataSource = this.getDataSource();
+            clon.DataTrain = this.getDataTrain();
+            clon.DataTest = this.getDataTest();
+            clon.errorRate = this.getErrorRate();
+            clon.predictions = this.getPredictions();
+            clon.MatrixConfusion = this.getMatrixConfusion().clone();
+            clon.eval = this.eval;
+            return clon;
+        } catch (CloneNotSupportedException ex) {
+            Logger.getLogger(Classification.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+        
     }
     
 }
