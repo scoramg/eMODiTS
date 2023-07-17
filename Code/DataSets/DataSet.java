@@ -30,22 +30,14 @@ import org.apache.commons.math3.distribution.NormalDistribution;
  */
 public class DataSet implements Cloneable {
     public static final int NUMBER_OF_DATASETS = 86;
-//    public static final int NUMBER_OF_DATASETS = 96;
     public static final List<Integer> DATASETS_IGNORED = new ArrayList<>();
-//    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(23,66);
-//    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(86,87,88,89,90);
-//    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,87,88,89,90,91,92,93);
-//    public static final List<Integer> DATASETS_IGNORED = Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93);
     public static double[][] limits;
     private Data original;
     private Data train;
     private Data test;
-//    private int noClasses;
-//    private List<Integer> classes; 
     private String ruta_ucr;
     private String name;
     private int index;
-//    private String subfix;
     private double minERFound;
 
     public double[][] getLimits() {
