@@ -49,5 +49,6 @@ Example:
 The employed datasets are MATLAB files containing the train and test data called <DATASET_NAME>_TRAIN and <DATASET_NAME>_TEST, respectively, obtained from the UCR repository [1]. 
 LIMITS variable is the lower and upper value found in the datasets to fix the domain of the decision variables.
 
+# References
 [1] Chen, Yanping and Keogh, Eamonn and Hu, Bing and Begum, Nurjahan and Bagnall, Anthony and Mueen, Abdullah and Batista, Gustavo. The UCR Time Series Classification Archive. July 2015. www.cs.ucr.edu/~eamonn/time_series_data/.
   
