@@ -21,7 +21,7 @@ Ejemplo:
   * java eMODiTS.jar 100 15 300 0.2 0.8 8 3 1 38
 
 ### Bases de datos
-Las bases de datos empleadas son archivos de MATLAB que contienen los conjuntos de entrenamiento y prueba llamados <DATASET_NAME>_TRAIN y <DATASET_NAME>_TEST respectivamente, obtenidos del repositorio UCR []. 
+Las bases de datos empleadas son archivos de MATLAB que contienen los conjuntos de entrenamiento y prueba llamados <DATASET_NAME>_TRAIN y <DATASET_NAME>_TEST respectivamente, obtenidos del repositorio UCR [1]. 
 La variable LIMITE se refiere a los valores superior e inferior encontrados en la base de datos, usados para fijar el dominio de las variables de decisión.
 # eMODiTS
 ## English version
@@ -46,7 +46,8 @@ Example:
   * java eMODiTS.jar 100 15 300 0.2 0.8 8 3 1 38  
 
 ### Datasets
-The employed datasets are MATLAB files containing the train and test data called <DATASET_NAME>_TRAIN and <DATASET_NAME>_TEST, 
- * respectively, obtained from the UCR repository. 
- * LIMITS variable is the lower and upper value found in the datasets to fix the domain of the decision variables.
+The employed datasets are MATLAB files containing the train and test data called <DATASET_NAME>_TRAIN and <DATASET_NAME>_TEST, respectively, obtained from the UCR repository [1]. 
+LIMITS variable is the lower and upper value found in the datasets to fix the domain of the decision variables.
+
+[1] Chen, Yanping and Keogh, Eamonn and Hu, Bing and Begum, Nurjahan and Bagnall, Anthony and Mueen, Abdullah and Batista, Gustavo. The UCR Time Series Classification Archive. July 2015. www.cs.ucr.edu/~eamonn/time_series_data/.
   
