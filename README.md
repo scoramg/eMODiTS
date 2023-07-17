@@ -4,7 +4,7 @@ Discretizacion símbolica de bases de datos temporales usando optimización mult
 
 Para ejecutar el programa, hay que posicionarse en la carpeta /TimeSeriesDiscretize y ejecutar el archivo CommandRunning.java o ejecutar el archivo eMODiTS.jar ubicado en la carpeta Ejecutable, de la siguiente manera:
 
-  * java eMODiTS.jar PS NE NG MR CR iFitnessFunction iAlgorithm iApproach iDS
+  * java -jar eMODiTS.jar PS NE NG MR CR iFitnessFunction iAlgorithm iApproach iDS
 
 Donde:
   * PS: Tamaño de la población
@@ -18,7 +18,7 @@ Donde:
   * iDS: Este parámetro esta relacionado el número de base de datos que está definido en DataSets.java, puedes agregar un nuevo número, agregarlo ahí y pasarlo como parámetro en esta parte.
 
 Ejemplo:
-  * java eMODiTS.jar 100 15 300 0.2 0.8 8 3 1 38
+  * java -jar eMODiTS.jar 100 15 300 0.2 0.8 8 3 1 38
 
 ### Bases de datos
 Las bases de datos empleadas son archivos de MATLAB que contienen los conjuntos de entrenamiento y prueba llamados <DATASET_NAME>_TRAIN y <DATASET_NAME>_TEST respectivamente, obtenidos del repositorio UCR [1]. 
@@ -29,7 +29,7 @@ Symbolic Discretization of Time Series using Multi-Objective optimization and De
 
 To run the program, you must go to the /TimeSeriesDiscretize folder and execute the CommandRunning.java file or the eMODiTS.jar file located in the Executable folder, as follows:
 
-  * java eMODiTS.jar PS NE NG MR CR iFitnessFunction iAlgorithm iApproach iDS
+  * java -jar eMODiTS.jar PS NE NG MR CR iFitnessFunction iAlgorithm iApproach iDS
 
 Where:
   * PS: Population size
@@ -43,7 +43,7 @@ Where:
   * iDS: This option is related to the database ID to be executed, defined in DataSets.java. Here, it is possible to add a new dataset by modifying the DataSet.java and after putting the new number as in this parameter.
   
 Example:
-  * java eMODiTS.jar 100 15 300 0.2 0.8 8 3 1 38  
+  * java -jar eMODiTS.jar 100 15 300 0.2 0.8 8 3 1 38  
 
 ### Datasets
 The employed datasets are MATLAB files containing the train and test data called <DATASET_NAME>_TRAIN and <DATASET_NAME>_TEST, respectively, obtained from the UCR repository [1]. 
