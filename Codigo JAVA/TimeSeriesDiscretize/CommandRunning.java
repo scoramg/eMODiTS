@@ -12,6 +12,7 @@ import Interfaces.IScheme;
 import Populations.MOPopulation;
 import Populations.Population;
 import ParetoFront.ParetoFront;
+//import Utils.Results.Results;
 import ca.nengo.io.MatlabExporter;
 import java.io.File;
 import java.io.IOException;
@@ -28,25 +29,26 @@ import parameters.Locals;
  */
 public class CommandRunning {
     public static void main(String[] args) {
-//        int PS = Integer.valueOf(args[0]);
-//        int NE = Integer.valueOf(args[1]);
-//        int NG = Integer.valueOf(args[2]);
-//        double MR = Double.valueOf(args[3]);
-//        double CR = Double.valueOf(args[4]);
-//        int iFitnessFunction = Integer.valueOf(args[5]); //1 Rechy (3 funciones), 8-EPAccuracy,EPComplexity,Infoloss
-////        int iAlgorithm = Integer.valueOf(args[6]); // 1- Evolutionary Programming, 2 - Genetic Algorithm, 3 - NSGAII
-////        int iApproach = Integer.valueOf(args[7]); // 0 - PEVOMO, 1 - Proposal
-//        int iDS = Integer.valueOf(args[6]);
+        int PS = Integer.valueOf(args[0]); // Tamaño de la población (Population Size)
+        int NE = Integer.valueOf(args[1]); // Número de ejecuciones (Number of Execution)
+        int NG = Integer.valueOf(args[2]); // Número de Generaciones (Number of Generations)
+        double MR = Double.valueOf(args[3]); //Porcentaje de mutación (Mutation percentage)
+        double CR = Double.valueOf(args[4]); // Porcentaje de cruza (Crossover percentahe)
+        int iFitnessFunction = Integer.valueOf(args[5]); //Type of fitness functions - 1 Rechy (3 funciones), 8-EPAccuracy,EPComplexity,Infoloss. CHOOSE option 8
+        int iAlgorithm = Integer.valueOf(args[6]); //Type of optimizer 1- Evolutionary Programming, 2 - Genetic Algorithm, 3 - NSGAII. CHOOSE option 3
+        int iApproach = Integer.valueOf(args[7]); // Type of approach 0 - PEVOMO, 1 - Proposal. CHOOSE option 1.
+        int iDS = Integer.valueOf(args[8]); //Este parámetro esta relacionado el número de base de datos que está definido en DataSets.java, puedes agregar un nuevo número, agregarlo ahí y pasarlo como parámetro en esta parte. (This option is related to the database ID to be executed, defined in DataSets.java. Here, it is possible to add a new dataset by modifying the DataSet.java and after putting the new number as in this parameter.)
 
-        int PS = 100;
+        /*int PS = 100;
         int NE = 15;
-        int NG = 500;
+        int NG = 300;
         double MR = 0.2;
         double CR = 0.8;
-        int iFitnessFunction = 8;
-        int iAlgorithm = 3;
-        int iApproach = 1;
-        int iDS = 83;
+        int iFitnessFunction = 1; //3 (EC), 10 (EI), 11 (CI), 8 (ECI)
+        int iAlgorithm = 1;
+        int iApproach = 0;
+        int iDS = 95;*/
+        
         int TypeDataSet = 1; //0-toda, 1-train, 2-test
 //        
         
@@ -101,7 +103,7 @@ public class CommandRunning {
             for(int m=d;m<=fultimo;m++){
                 try {
                     DataSet ds = new DataSet(m, false);
-                    System.out.println("Dataset: "+ds.getName());
+                    System.out.println("Dataset: "+ds.getName() + ", Dimensions: ["+ds.getOriginal().getDimensions()[0]+","+ds.getOriginal().getDimensions()[1]+"]");
 
                     general_params.setAccumulatedFront(new MOPopulation(0, general_params.isIsSelfAdaption()));
                     for (int e=0; e<NE;e++){
@@ -114,9 +116,14 @@ public class CommandRunning {
                     String directory = scheme_type+"/"+ds.getName();
                     String FileName =  ds.getName()+"_"+scheme_type;
                     Export(directory, FileName, ds, general_params);
+                    general_params.execution_front.Export(directory);
+//                    if (general_params.getiAlgorithm() == 1)
+//                        Results.GetDataEP(NE, m, "");
 
                 } catch (MyException ex) {
                     Logger.getLogger(CommandRunning.class.getName()).log(Level.SEVERE, null, ex);
+//                } catch (IOException ex) {
+//                    Logger.getLogger(CommandRunning.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }

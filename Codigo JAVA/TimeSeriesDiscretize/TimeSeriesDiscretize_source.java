@@ -6,6 +6,8 @@
 package TimeSeriesDiscretize;
 
 import java.util.List;
+
+//import ParetoFront.ParetoFront;
 import parameters.*;
 
 /**
@@ -15,8 +17,8 @@ import parameters.*;
 public class TimeSeriesDiscretize_source implements Runnable {
     
     public static final int MAX_NUMBER_OF_ALPHABET_CUTS = 26;
-    public static final int MIN_NUMBER_OF_ALPHABET_CUTS = 3;
-    public static final int MIN_NUMBER_OF_WORD_CUTS = 2;
+    public static final int MIN_NUMBER_OF_ALPHABET_CUTS = 1;
+    public static final int MIN_NUMBER_OF_WORD_CUTS = 1;
     public static final double MAX_NUMBER_OF_WORD_CUTS = 0.9;
     public static List<Character> symbols;
     

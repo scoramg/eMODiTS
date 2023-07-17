@@ -12,6 +12,9 @@ import Populations.MOPopulation;
 import Populations.Population;
 import ParetoFront.ParetoFront;
 import ca.nengo.io.MatlabExporter;
+
+import static DataSets.DataSet.getUCRRepository;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -37,7 +40,7 @@ public class TimeSeriesDiscretize extends javax.swing.JFrame implements Runnable
         general_params = new Generals();
         jPFF.setVisible(false);
         for(int i=0;i<=DataSet.NUMBER_OF_DATASETS;i++){
-            jCBDataset.addItem(DataSet.getUCRRepository(i));
+            jCBDataset.addItem(getUCRRepository(i));
         }
         jTFAlpha.setEnabled(true);
         jTFBeta.setEnabled(true);
